@@ -1,0 +1,11 @@
+**
+!services/
+!services/ttn-to-aprs-bridge/
+!services/ttn-to-aprs-bridge/**
+services/ttn-to-aprs-bridge/conf.json
+services/ttn-to-aprs-bridge/.idea
+services/ttn-to-aprs-bridge/.run
+services/ttn-to-aprs-bridge/.junie
+services/ttn-to-aprs-bridge/tile_cache
+services/ttn-to-aprs-bridge/srtm
+services/ttn-to-aprs-bridge/*.test

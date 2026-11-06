@@ -25,18 +25,18 @@ also be developed independently from its directory.
 
 ## Services
 
-| Service | Source / Docker build context | Dockerfile |
+| Service | Source directory | Dockerfile |
 | --- | --- | --- |
 | postgres-insert-raw | `cmd/insert-raw` / repository root | `Dockerfile.insert-raw` |
 | aggregate | `cmd/aggregate` / repository root | `Dockerfile.aggregate` |
 | gateway-update | `cmd/gateway-update` / repository root | `Dockerfile.gateway-update` |
 | gateway-bbox | `cmd/gateway-boundingbox` / repository root | `Dockerfile.gateway-bbox` |
 | website-api | `cmd/website-api` / repository root | `Dockerfile.website-api` |
-| websockets-live | `services/websockets-live` | `Dockerfile` in service directory |
-| gateway-channels | `services/gateway-channels` | `Dockerfile` in service directory |
-| ttn-to-aprs-bridge | `services/ttn-to-aprs-bridge` | `Dockerfile` in service directory |
-| ingress-api | `services/ingress-api` | `Dockerfile` in service directory |
-| tile-map-server | `services/tile-map-server` | `Dockerfile` in service directory |
+| websockets-live | `services/websockets-live` | `Dockerfile.websockets-live` |
+| gateway-channels | `services/gateway-channels` | `Dockerfile.gateway-channels` |
+| ttn-to-aprs-bridge | `services/ttn-to-aprs-bridge` | `Dockerfile.ttn-to-aprs-bridge` |
+| ingress-api | `services/ingress-api` | `Dockerfile.ingress-api` |
+| tile-map-server | `services/tile-map-server` | `Dockerfile.tilemapserver` |
 
 The consolidation was merged into `master`. The tile server includes
 the working changes from its original `simulated-coverage` branch, including
@@ -48,7 +48,11 @@ Ingress uses its committed source; its former local test edit was discarded
 during cleanup. The imported ChirpStack test was updated to use the current
 `NetworkId` field so test packages compile.
 
-Example: `docker build -t websockets-live services/websockets-live`.
+All Compose Git build contexts use the plain repository URL and therefore build
+from the default-branch head. Root-level Dockerfiles support every service.
+
+Example: `docker build -f Dockerfile.websockets-live -t websockets-live .`.
+The original module-local Dockerfiles also support local subdirectory builds.
 
 Imported service images use an empty `conf.default.json` to retain Go defaults
 and environment overrides. Source templates remain available as examples; real

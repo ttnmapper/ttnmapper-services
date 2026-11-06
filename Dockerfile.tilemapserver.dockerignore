@@ -1,0 +1,11 @@
+**
+!services/
+!services/tile-map-server/
+!services/tile-map-server/**
+services/tile-map-server/conf.json
+services/tile-map-server/.idea
+services/tile-map-server/.run
+services/tile-map-server/.junie
+services/tile-map-server/tile_cache
+services/tile-map-server/srtm
+services/tile-map-server/*.test
