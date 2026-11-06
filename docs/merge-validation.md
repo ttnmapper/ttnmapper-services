@@ -1,12 +1,13 @@
 # Source consolidation validation
 
-Branch: `merge-go-services`. No production rollout performed yet.
+Branch: `merge-go-services`. Source commit `189c74d` was deployed to the
+services VM by the operator on 6 November 2026.
 
 ## Passing checks
 
 - All six modules build with Go 1.27.3 using their original vendored dependencies.
 - All six modules' test packages compile with `scripts/check-go.sh compile-tests`.
-- Imported WebSockets, gateway-channels, APRS, and ingress images build locally.
+- All ten service images build locally and built successfully on the services VM.
 - Tile-server isolated simulation/runner/raster/cache/configuration tests pass.
 - Tile-server browser regression test passes with
   `node --test pkg/tms/debug/coverage.test.cjs`.
@@ -35,3 +36,28 @@ No dependency upgrades, database schema changes, or maintenance jobs are part of
 this consolidation. Existing destination export/aggregate edits remain outside
 migration commits. Tile-server working source is captured separately in
 `tile-server-import.json`.
+
+## Services-VM rollout evidence
+
+The operator supplied the server build, startup, logs, and queue output after the
+rollout at approximately 15:34 UTC on 6 November 2026:
+
+- All ten Go service images built from source commit `189c74d`.
+- All ten service containers started; infrastructure containers stayed running.
+- Logs showed live ingress, PostgreSQL inserts, aggregation, gateway processing,
+  and WebSocket consumption. The website API started its HTTP listener.
+- APRS authenticated successfully. This does not by itself verify delivery of a frame.
+- All eight listed RabbitMQ queues had one consumer, zero ready messages, and zero
+  unacknowledged messages at the time of the check.
+- Prometheus reported ready. Individual scrape-target health and public API/tile
+  responses were not included in the supplied output.
+- Rollback image references were saved on the server in
+  `/root/ttnmapper-go-rollback-20261106-151907/images.yml`.
+
+The tile-server missing-config message was followed by successful loading of
+its defaults/environment settings and HTTP startup. Invalid-location messages
+were accompanied by continued processing of valid packets.
+
+This is recorded operator-supplied evidence, not an independent remote inspection
+or a long-term stability guarantee. The separate production tile-server host is
+unchanged. Retain server rollback images until the operator chooses to retire them.

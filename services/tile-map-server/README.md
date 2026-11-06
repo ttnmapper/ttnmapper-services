@@ -1,9 +1,9 @@
 # CoverageMap.net (a.k.a. TTN Mapper)
 
 People drive around with LoRaWAN sensors, reporting RSSI, SNR, location and other radio parameters.
-They opt-in to upload these "packets" to TTN Mapper, where they are received by the ingress-api (https://github.com/ttnmapper/ingress-api).
-These packets are written to PostgreSQL by a microservice (https://github.com/ttnmapper/postgres-insert-raw/tree/master/cmd/insert-raw).
-These packets are aggregated to zoom level 19 tiles (slippy map / OpenStreetMap tiles) by a microservice (https://github.com/ttnmapper/postgres-insert-raw/tree/master/cmd/aggregate), and written to a database table.
+They opt-in to upload these "packets" to TTN Mapper, where they are received by the [ingress-api](../ingress-api/).
+These packets are written to PostgreSQL by a microservice ([source](../../cmd/insert-raw/)).
+These packets are aggregated to zoom level 19 tiles (slippy map / OpenStreetMap tiles) by a microservice ([source](../../cmd/aggregate/)), and written to a database table.
 
 ## This project - the tile map server
 

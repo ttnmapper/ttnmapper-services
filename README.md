@@ -1,7 +1,8 @@
 # TTN Mapper Go backend
 
-This repository is being consolidated into the home for TTN Mapper / CoverageMap
-Go services. Existing database workers remain in the root module. Imported
+This repository contains all TTN Mapper / CoverageMap Go backend services.
+Make backend changes here; the original standalone repositories are retained
+for history and any local work that was not imported. Existing database workers remain in the root module. Imported
 standalone services retain their own modules and vendored dependencies under
 `services/`, avoiding dependency changes during the deployment migration.
 
@@ -51,7 +52,11 @@ configuration behavior remains unchanged.
 
 Production orchestration lives in the separate `ttnmapper-deployment` repository.
 Keep independent service processes, names, queues, API routes, and database schema
-behavior during the source migration.
+behavior when maintaining these services.
+
+The services VM was deployed successfully from source commit `189c74d` on
+6 November 2026. See [validation and rollout evidence](docs/merge-validation.md).
+The separate production tile-server host has not been migrated.
 
 ## Import provenance
 

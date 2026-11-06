@@ -4,7 +4,7 @@ REST API where new raw measurement data will be received.
 
 # Configuration
 
-Configuration can be passed as environment variables, or by setting the values in config.json. For the latter copy config.json.template and edit the values.
+Configuration can be passed as environment variables, or by setting the values in conf.json. For the latter copy conf.json.template and edit the values.
 
 | JSON key | Type | ENV var key | Description |
 | --- | --- | --- | --- |
