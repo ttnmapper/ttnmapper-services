@@ -1,0 +1,43 @@
+# Signal-Server (https://github.com/loorisr/Signal-Server, the fork this project is
+# developed/tested against) is a C++ CMake project linked against glibc, spdlog and
+# GDAL, so it's built here in an Ubuntu stage and copied into the equally
+# Ubuntu-based runtime stage below (GDAL's dependency tree is too large to easily
+# reproduce on a minimal/musl base like Alpine or scratch).
+FROM ubuntu:24.04 AS signalserver-builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates git g++ make cmake libspdlog-dev libgdal-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN git clone --depth 1 https://github.com/loorisr/Signal-Server.git /signal-server-src
+
+WORKDIR /signal-server-src/build
+RUN cmake ../src && make -j"$(nproc)"
+
+FROM golang:latest AS builder
+
+WORKDIR /go-modules
+
+COPY . ./
+
+# Building using -mod=vendor, which will utilize the v
+#RUN go get
+#RUN go mod vendor
+RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o tile-map-server ./cmd/tms
+
+FROM ubuntu:24.04
+
+# ca-certificates: required for TLS verification when downloading Copernicus DEM
+# tiles over HTTPS.
+# libgdal34t64 / libspdlog1.12: runtime libraries needed by the Signal-Server
+# binary built above.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates libgdal34t64 libspdlog1.12 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /root/
+
+COPY --from=builder /go-modules/tile-map-server .
+COPY --from=signalserver-builder /signal-server-src/build/signalserver /usr/local/bin/signalserver
+
+CMD ["./tile-map-server"]

@@ -182,7 +182,7 @@ func insertToPostgres(thread int) {
 				dbInserts.Inc()
 			} else {
 				log.Println(utils.PrettyPrint(entry))
-				log.Print("[%d][p] PG Insert", thread)
+				log.Printf("[%d][p] PG Insert", thread)
 				utils.FailOnError(err, "")
 			}
 

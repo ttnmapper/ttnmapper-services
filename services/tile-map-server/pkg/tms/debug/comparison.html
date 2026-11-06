@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Signal vs Distance Comparison</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        #container { width: 80%; margin: auto; }
+        #recommendations {
+            background: #f4f4f4;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 5px solid #2196F3;
+            margin-top: 20px;
+        }
+        .metric { font-weight: bold; color: #333; }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>Signal vs Distance for <span id="gatewayId"></span></h1>
+
+        <div id="loading" style="background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; margin-bottom: 20px;">
+            Loading data and running simulation if needed. This may take a few seconds...
+        </div>
+
+        <div id="analysis" style="display:none;">
+            <h3>Mathematical Analysis</h3>
+            <p>
+                Matched points: <span id="commonPoints" class="metric"></span><br>
+                Mean Bias: <span id="meanError" class="metric"></span> dB (positive means simulation is stronger)<br>
+                RMSE: <span id="rmse" class="metric"></span> dB
+            </p>
+            <div id="recommendations">
+                <h4>Assessment:</h4>
+                <ul id="recList"></ul>
+            </div>
+        </div>
+
+        <canvas id="chart"></canvas>
+        <p>
+            <b>Y-axis:</b> Bucket Index (0 is strongest &gt;-100dBm, 11 is weakest &lt;-150dBm)<br>
+            <b>X-axis:</b> Distance in meters
+        </p>
+    </div>
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const networkId = urlParams.get('network_id');
+        const gatewayId = urlParams.get('gateway_id');
+        document.getElementById('gatewayId').textContent = gatewayId;
+
+        // Fetch analysis data
+        fetch("/debug/gateway/" + encodeURIComponent(networkId) + "/" + encodeURIComponent(gatewayId) + "/analysis")
+            .then(res => res.json())
+            .then(data => {
+                if (data.common_points > 0) {
+                    document.getElementById('analysis').style.display = 'block';
+                    document.getElementById('commonPoints').textContent = data.common_points;
+                    document.getElementById('meanError').textContent = data.mean_error_db.toFixed(2);
+                    document.getElementById('rmse').textContent = data.rmse_db.toFixed(2);
+
+                    const list = document.getElementById('recList');
+                    data.recommendations.forEach(rec => {
+                        const li = document.createElement('li');
+                        li.textContent = rec;
+                        list.appendChild(li);
+                    });
+                }
+            })
+            .catch(err => {
+                console.error("Failed to fetch analysis:", err);
+            });
+
+        // Fetch chart data
+        fetch("/debug/gateway/" + encodeURIComponent(networkId) + "/" + encodeURIComponent(gatewayId) + "/comparison")
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('loading').style.display = 'none';
+                const ctx = document.getElementById('chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'scatter',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'Measured',
+                                data: data.measured.map(p => ({x: p.distance, y: p.signal})),
+                                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                pointRadius: 5,
+                                pointBorderWidth: 0,
+                                pointStyle: 'circle',
+                                showLine: false
+                            },
+                            {
+                                label: 'Simulated',
+                                data: data.simulated.map(p => ({x: p.distance, y: p.signal - 0.5})),
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                pointRadius: 5,
+                                pointBorderWidth: 0,
+                                pointStyle: 'circle',
+                                showLine: false
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            x: {
+                                title: { display: true, text: 'Distance (m)' }
+                            },
+                            y: {
+                                reverse: true,
+                                title: { display: true, text: 'Signal Bucket Index (lower is better)' },
+                                min: 0,
+                                max: 12
+                            }
+                        }
+                    }
+                });
+            });
+    </script>
+</body>
+</html>

@@ -3,13 +3,13 @@ package noc
 import (
 	"log"
 	"testing"
-	"ttnmapper-gateway-update/utils"
+	"ttnmapper-postgres-insert-raw/pkg/utils"
 )
 
 func TestFetchNocStatuses(t *testing.T) {
 	gateways, err := FetchNocStatuses()
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
 	log.Println(utils.PrettyPrint(gateways))
 }
