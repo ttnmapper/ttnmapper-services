@@ -1,6 +1,6 @@
 # Source consolidation validation
 
-Branch: `merge-go-services`. Source commit `189c74d` was deployed to the
+The migration branch was merged into `master`. Source commit `189c74d` was deployed to the
 services VM by the operator on 6 November 2026.
 
 ## Passing checks
@@ -20,7 +20,7 @@ The full suite is not green. The imported ingress handler tests depend on DNS
 lookups for email validation and fail in the restricted test environment. Its
 committed `TestTtsV3Pb` fixture also panics in `CopyV3Fields`; the test and runtime
 implementation are unchanged from the source revision. The original ingress
-checkout's separate local test changes have not been imported.
+checkout's separate local test changes were not imported and were discarded during cleanup.
 
 Database/external-API tests have not been run against production. APRS tests can
 transmit packets or wait indefinitely and were compiled without executing them.
@@ -33,8 +33,8 @@ transmit packets or wait indefinitely and were compiled without executing them.
 - Imported ChirpStack test: replace removed `NetworkType` with `NetworkId`.
 
 No dependency upgrades, database schema changes, or maintenance jobs are part of
-this consolidation. Existing destination export/aggregate edits remain outside
-migration commits. Tile-server working source is captured separately in
+this consolidation. Uncommitted destination export/aggregate edits were discarded
+at the operator's request during cleanup. Tile-server working source is captured separately in
 `tile-server-import.json`.
 
 ## Services-VM rollout evidence

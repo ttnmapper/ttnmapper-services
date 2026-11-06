@@ -1,8 +1,8 @@
 # TTN Mapper Go backend
 
 This repository contains all TTN Mapper / CoverageMap Go backend services.
-Make backend changes here; the original standalone repositories are retained
-for history and any local work that was not imported. Existing database workers remain in the root module. Imported
+Make backend changes here on `master`. The original standalone GitHub repositories
+are retired and are being archived for historical reference. Existing database workers remain in the root module. Imported
 standalone services retain their own modules and vendored dependencies under
 `services/`, avoiding dependency changes during the deployment migration.
 
@@ -33,14 +33,14 @@ also be developed independently from its directory.
 | ingress-api | `services/ingress-api` | `Dockerfile` in service directory |
 | tile-map-server | `services/tile-map-server` | `Dockerfile` in service directory |
 
-The consolidation is on branch `merge-go-services`. The tile server includes
+The consolidation was merged into `master`. The tile server includes
 the working changes from its original `simulated-coverage` branch, including
-untracked Go/JavaScript tests and simulation documentation. Its original checkout
-is unchanged. File hashes and source status are recorded in
+Go/JavaScript tests and simulation documentation that were untracked at import.
+File hashes and the original source status are recorded in
 [`docs/tile-server-import.json`](docs/tile-server-import.json).
 
-Ingress uses its committed source; its original checkout's local test edit is
-left untouched. The imported ChirpStack test was updated to use the current
+Ingress uses its committed source; its former local test edit was discarded
+during cleanup. The imported ChirpStack test was updated to use the current
 `NetworkId` field so test packages compile.
 
 Example: `docker build -t websockets-live services/websockets-live`.
