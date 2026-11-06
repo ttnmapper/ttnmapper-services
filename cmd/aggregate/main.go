@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/aggregations"
-	"ttnmapper-postgres-insert-raw/pkg/database"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/aggregations"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/utils"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus/promhttp"

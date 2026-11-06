@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/types"
 )
 
 var Url = "https://www.thethingsnetwork.org/gateway-data/"

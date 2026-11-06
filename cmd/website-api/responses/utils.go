@@ -3,7 +3,7 @@ package responses
 import (
 	"encoding/json"
 	"net/http"
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/pkg/database"
 
 	"github.com/go-chi/render"
 )

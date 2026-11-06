@@ -6,7 +6,7 @@ import (
 	"github.com/bserdar/jsonstream"
 	"log"
 	"net/http"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/types"
 )
 
 func FetchDisk91Snapshot() ([]Disk91Snapshot, error) {

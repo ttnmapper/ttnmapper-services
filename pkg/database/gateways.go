@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/types"
 )
 
 func InsertGatewayLocationsBatch(gatewayLocations []GatewayLocation) error {

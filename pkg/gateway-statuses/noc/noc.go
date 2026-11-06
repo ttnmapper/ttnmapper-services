@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/types"
 )
 
 var Url = "http://noc.thethingsnetwork.org:8085/api/v2/gateways"

@@ -2,7 +2,7 @@ package main
 
 import (
 	"net/http"
-	"ttnmapper-postgres-insert-raw/cmd/website-api/responses"
+	"ttnmapper-services/cmd/website-api/responses"
 
 	"github.com/go-chi/render"
 )

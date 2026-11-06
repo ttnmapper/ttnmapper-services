@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/database"
-	"ttnmapper-postgres-insert-raw/pkg/oldstack"
-	"ttnmapper-postgres-insert-raw/pkg/types"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/oldstack"
+	"ttnmapper-services/pkg/types"
+	"ttnmapper-services/pkg/utils"
 
 	"github.com/kelseyhightower/envconfig"
 )

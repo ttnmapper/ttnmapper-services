@@ -3,8 +3,8 @@ package database
 import (
 	"database/sql"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/types"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/types"
+	"ttnmapper-services/pkg/utils"
 )
 
 /*

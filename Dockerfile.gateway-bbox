@@ -5,7 +5,7 @@ WORKDIR /go-modules
 COPY . ./
 
 # Building using -mod=vendor, which will utilize the vendor directory
-RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o gateway-bbox ttnmapper-postgres-insert-raw/cmd/gateway-boundingbox
+RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o gateway-bbox ttnmapper-services/cmd/gateway-boundingbox
 
 FROM scratch
 WORKDIR /root/

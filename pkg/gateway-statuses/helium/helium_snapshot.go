@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/types"
 )
 
 func FetchSnapshot() (time.Time, []HotspotSnapshot, error) {

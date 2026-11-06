@@ -12,7 +12,7 @@ import (
 	"github.com/artyom/csvstruct"
 	"github.com/kelseyhightower/envconfig"
 
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/pkg/database"
 )
 
 type Configuration struct {

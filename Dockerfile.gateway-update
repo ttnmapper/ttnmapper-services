@@ -7,7 +7,7 @@ COPY . ./
 # Building using -mod=vendor, which will utilize the v
 #RUN go get
 #RUN go mod vendor
-RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o gateway-update ttnmapper-postgres-insert-raw/cmd/gateway-update
+RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o gateway-update ttnmapper-services/cmd/gateway-update
 
 FROM scratch
 

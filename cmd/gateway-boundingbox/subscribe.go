@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/utils"
 
 	"github.com/streadway/amqp"
 )

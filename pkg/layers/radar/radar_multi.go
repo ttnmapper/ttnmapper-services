@@ -7,8 +7,8 @@ import (
 	"log"
 	"sort"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/aggregations/radar_beam"
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/pkg/aggregations/radar_beam"
+	"ttnmapper-services/pkg/database"
 )
 
 var radarMultiCache *cache.Cache

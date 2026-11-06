@@ -3,7 +3,7 @@ package database
 import (
 	"log"
 	"testing"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/utils"
 )
 
 func TestGetOnlineGatewaysForNetwork(t *testing.T) {

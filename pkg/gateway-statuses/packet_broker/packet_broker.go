@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/gateway-statuses/packet_broker/Openapi"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/gateway-statuses/packet_broker/Openapi"
+	"ttnmapper-services/pkg/types"
 )
 
 func FetchStatuses(page int) ([]Openapi.Gateway, error) {

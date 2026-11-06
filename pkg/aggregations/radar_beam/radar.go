@@ -5,10 +5,10 @@ import (
 	"log"
 	"sync"
 	"time"
-	utils2 "ttnmapper-postgres-insert-raw/pkg/aggregations/utils"
-	"ttnmapper-postgres-insert-raw/pkg/database"
-	"ttnmapper-postgres-insert-raw/pkg/types"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	utils2 "ttnmapper-services/pkg/aggregations/utils"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/types"
+	"ttnmapper-services/pkg/utils"
 )
 
 const ()

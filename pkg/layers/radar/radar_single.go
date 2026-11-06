@@ -6,7 +6,7 @@ import (
 	geojson "github.com/paulmach/go.geojson"
 	"log"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/pkg/database"
 )
 
 var radarSingleCache *cache.Cache

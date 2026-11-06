@@ -2,7 +2,7 @@ package queues
 
 import (
 	"github.com/streadway/amqp"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/types"
 )
 
 type QueueCredentials struct {

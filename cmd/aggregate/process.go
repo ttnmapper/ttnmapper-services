@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"ttnmapper-postgres-insert-raw/pkg/aggregations"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/aggregations"
+	"ttnmapper-services/pkg/types"
 )
 
 // A new live packet came in. Add it to the appropriate grid cell.

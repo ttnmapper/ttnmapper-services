@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"testing"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/utils"
 )
 
 func TestFetchStatuses(t *testing.T) {

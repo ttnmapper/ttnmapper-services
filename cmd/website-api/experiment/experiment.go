@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 	"time"
-	"ttnmapper-postgres-insert-raw/cmd/website-api/responses"
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/cmd/website-api/responses"
+	"ttnmapper-services/pkg/database"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"

@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"github.com/streadway/amqp"
 	"log"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/utils"
 )
 
 func (queueContext *PublishContext) Publish() {

@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"ttnmapper-postgres-insert-raw/cmd/website-api/device"
-	"ttnmapper-postgres-insert-raw/cmd/website-api/experiment"
-	"ttnmapper-postgres-insert-raw/cmd/website-api/gateway"
-	"ttnmapper-postgres-insert-raw/cmd/website-api/network"
+	"ttnmapper-services/cmd/website-api/device"
+	"ttnmapper-services/cmd/website-api/experiment"
+	"ttnmapper-services/cmd/website-api/gateway"
+	"ttnmapper-services/cmd/website-api/network"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"

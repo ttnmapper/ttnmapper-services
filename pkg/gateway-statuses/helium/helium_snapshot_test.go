@@ -3,7 +3,7 @@ package helium
 import (
 	"log"
 	"testing"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/utils"
 )
 
 func TestFetchSnapshot(t *testing.T) {

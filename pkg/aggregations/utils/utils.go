@@ -5,8 +5,8 @@ import (
 	"github.com/kellydunn/golang-geo"
 	"log"
 	"math"
-	"ttnmapper-postgres-insert-raw/pkg/database"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/types"
 )
 
 const (

@@ -5,7 +5,7 @@ WORKDIR /go-modules
 COPY . ./
 
 # Building using -mod=vendor, which will utilize the vendor directory
-RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o aggregate ttnmapper-postgres-insert-raw/cmd/aggregate
+RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o aggregate ttnmapper-services/cmd/aggregate
 
 FROM scratch
 WORKDIR /root/

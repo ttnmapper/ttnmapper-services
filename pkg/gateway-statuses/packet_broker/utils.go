@@ -3,8 +3,8 @@ package packet_broker
 import (
 	"fmt"
 	packetbroker "go.packetbroker.org/api/v3"
-	"ttnmapper-postgres-insert-raw/pkg/database"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/types"
 )
 
 func RoutingPolicyToDbPolicy(in *packetbroker.RoutingPolicy, out *database.PacketBrokerRoutingPolicy) {

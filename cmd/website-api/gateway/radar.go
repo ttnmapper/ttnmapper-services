@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-	"ttnmapper-postgres-insert-raw/cmd/website-api/responses"
-	"ttnmapper-postgres-insert-raw/pkg/layers/radar"
+	"ttnmapper-services/cmd/website-api/responses"
+	"ttnmapper-services/pkg/layers/radar"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"

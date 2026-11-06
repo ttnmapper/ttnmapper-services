@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 	"testing"
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/pkg/database"
 )
 
 func TestFetchStatusesPage(t *testing.T) {

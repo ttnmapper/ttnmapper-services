@@ -3,7 +3,7 @@ package queues
 import (
 	"github.com/streadway/amqp"
 	"log"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/utils"
 )
 
 func (queueContext *SubscribeContext) Subscribe() {

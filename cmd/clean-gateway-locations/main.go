@@ -2,7 +2,7 @@ package main
 
 import (
 	"log"
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/pkg/database"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/umahmood/haversine"

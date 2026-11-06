@@ -1,4 +1,4 @@
-module ttnmapper-postgres-insert-raw
+module ttnmapper-services
 
 go 1.22.5
 

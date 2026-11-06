@@ -2,7 +2,7 @@ package utils
 
 import (
 	"testing"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/types"
 )
 
 func TestSanitizeFrequency(t *testing.T) {

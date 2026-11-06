@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 	"testing"
-	"ttnmapper-postgres-insert-raw/pkg/oldstack"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/oldstack"
+	"ttnmapper-services/pkg/utils"
 
 	"github.com/kelseyhightower/envconfig"
 )

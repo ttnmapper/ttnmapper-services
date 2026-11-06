@@ -4,7 +4,7 @@ import (
 	"log"
 	"testing"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/utils"
 )
 
 func TestGetGatewaysByNameOrId(t *testing.T) {

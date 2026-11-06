@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"log"
-	"ttnmapper-postgres-insert-raw/pkg/database"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/utils"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/streadway/amqp"

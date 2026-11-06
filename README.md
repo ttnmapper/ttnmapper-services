@@ -1,10 +1,15 @@
-# TTN Mapper Go backend
+# TTN Mapper services
 
 This repository contains all TTN Mapper / CoverageMap Go backend services.
 Make backend changes here on `master`. The original standalone GitHub repositories
-are archived for historical reference; their local checkouts have been removed. Existing database workers remain in the root module. Imported
+are archived for historical reference; their local checkouts have been removed.
+Existing database workers remain in the root module. Imported
 standalone services retain their own modules and vendored dependencies under
 `services/`, avoiding dependency changes during the deployment migration.
+
+The repository is [ttnmapper/ttnmapper-services](https://github.com/ttnmapper/ttnmapper-services).
+The root Go module is named `ttnmapper-services`; standalone service modules
+retain their existing names. Docker service names and executable names are unchanged.
 
 ## Build and check
 

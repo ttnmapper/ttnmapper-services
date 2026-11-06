@@ -3,7 +3,7 @@ package utils
 import (
 	"errors"
 	"math"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/types"
 )
 
 func CheckData(packet types.TtnMapperUplinkMessage) error {

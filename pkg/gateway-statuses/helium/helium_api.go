@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/types"
+	"ttnmapper-services/pkg/types"
 )
 
 func FetchStatuses(cursor string) (HotspotApiResponse, error) {

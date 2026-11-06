@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 	_ "net/http/pprof"
-	"ttnmapper-postgres-insert-raw/pkg/database"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/utils"
 
 	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"

@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"testing"
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/pkg/database"
 
 	"github.com/kelseyhightower/envconfig"
 )

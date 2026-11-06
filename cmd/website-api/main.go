@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/pkg/database"
 
 	"github.com/kelseyhightower/envconfig"
 )

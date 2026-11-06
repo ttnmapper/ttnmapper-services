@@ -4,7 +4,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"log"
 	"testing"
-	"ttnmapper-postgres-insert-raw/pkg/database"
+	"ttnmapper-services/pkg/database"
 )
 
 type Configuration struct {

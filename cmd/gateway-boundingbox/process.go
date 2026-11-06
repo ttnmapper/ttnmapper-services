@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"time"
-	"ttnmapper-postgres-insert-raw/pkg/database"
-	"ttnmapper-postgres-insert-raw/pkg/types"
-	"ttnmapper-postgres-insert-raw/pkg/utils"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/types"
+	"ttnmapper-services/pkg/utils"
 
 	"github.com/patrickmn/go-cache"
 )

@@ -8,8 +8,8 @@ ssh -L 3306:127.0.0.1:3306 root@ttnmapper.org
 
 import (
 	"log"
-	"ttnmapper-postgres-insert-raw/pkg/database"
-	"ttnmapper-postgres-insert-raw/pkg/oldstack"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/oldstack"
 
 	"github.com/kelseyhightower/envconfig"
 )
