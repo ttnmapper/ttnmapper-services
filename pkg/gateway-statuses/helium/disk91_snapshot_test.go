@@ -1,26 +1,20 @@
 package helium
 
 import (
-	"log"
+	"encoding/json"
 	"testing"
-	"ttnmapper-services/pkg/utils"
 )
 
-func TestFetchDisk91Snapshot(t *testing.T) {
-	hotspots, err := FetchDisk91Snapshot()
+func TestDisk91Conversion(t *testing.T) {
+	var input Disk91Snapshot
+	if err := json.Unmarshal([]byte(`{"hotspotId":"gateway","animalName":"test","lastSeen":1600000000123,"position":{"lat":-33.9,"lng":18.8,"alt":100,"gain":5.5}}`), &input); err != nil {
+		t.Fatal(err)
+	}
+	got, err := Disk91SnapshotToTtnMapperGateway(input)
 	if err != nil {
-		t.Fatalf(err.Error())
+		t.Fatal(err)
 	}
-	if len(hotspots) == 0 {
-		log.Println("no data")
-	}
-	log.Printf("%d hotspots in snapshot", len(hotspots))
-
-	for _, hotspot := range hotspots {
-		gateway, err := Disk91SnapshotToTtnMapperGateway(hotspot)
-		if err != nil {
-			t.Fatalf(err.Error())
-		}
-		log.Println(utils.PrettyPrint(gateway))
+	if got.GatewayId != "gateway" || got.Name != "test" || got.NetworkId != "NS_HELIUM://000024" || got.Time != 1600000000123000000 || got.Latitude != -33.9 || got.Longitude != 18.8 || got.Altitude != 100 || got.Attributes["gain"] != 5.5 {
+		t.Fatalf("gateway = %+v", got)
 	}
 }

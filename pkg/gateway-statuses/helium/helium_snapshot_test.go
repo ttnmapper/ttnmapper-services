@@ -1,43 +1,25 @@
 package helium
 
 import (
-	"log"
 	"testing"
-	"ttnmapper-services/pkg/utils"
+	"time"
 )
 
-func TestFetchSnapshot(t *testing.T) {
-	//online := 0
-	//offline := 0
-	//other := 0
-
-	snapshotTime, hotspots, err := FetchSnapshot()
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	log.Printf("Found %d hotspots in snapshot", len(hotspots))
-	for _, hotspot := range hotspots {
-		if hotspot.Name == "cool-cerulean-poodle" {
-			log.Println(utils.PrettyPrint(hotspot))
-			gateway, err := HotspotSnapshotToTtnMapperGateway(snapshotTime, hotspot)
+func TestSnapshotConversion(t *testing.T) {
+	stamp := time.Unix(1600000000, 123)
+	for _, online := range []string{"online", "offline", "unknown"} {
+		t.Run(online, func(t *testing.T) {
+			got, err := HotspotSnapshotToTtnMapperGateway(stamp, HotspotSnapshot{Address: "gateway", Name: "test", Online: online, Latitude: -33.9, Longitude: 18.8, Mode: "full"})
 			if err != nil {
-				t.Fatalf(err.Error())
+				t.Fatal(err)
 			}
-			log.Println(utils.PrettyPrint(gateway))
-			//if hotspot.Online != "online" {
-			//	log.Println(gateway.Time)
-			//}
-			//if hotspot.Online == "online" {
-			//	online++
-			//} else if hotspot.Online == "offline" {
-			//	offline++
-			//} else {
-			//	other++
-			//}
-		}
+			wantTime := int64(0)
+			if online == "online" {
+				wantTime = stamp.UnixNano()
+			}
+			if got.NetworkId != "NS_HELIUM://000024" || got.GatewayId != "gateway" || got.Time != wantTime || got.Latitude != -33.9 || got.Longitude != 18.8 || got.Attributes["mode"] != "full" {
+				t.Fatalf("gateway = %+v", got)
+			}
+		})
 	}
-	//log.Println("Online", online)
-	//log.Println("Offline", offline)
-	//log.Println("Other", other)
 }

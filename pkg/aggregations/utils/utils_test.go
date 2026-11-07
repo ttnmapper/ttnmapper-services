@@ -1,29 +1,40 @@
 package utils
 
 import (
-	"log"
+	"math"
 	"testing"
 	"ttnmapper-services/pkg/database"
 	"ttnmapper-services/pkg/types"
 )
 
-func TestGetBearing(t *testing.T) {
-	gateway := types.TtnMapperGateway{Latitude: -33.936644228282525, Longitude: 18.87102216482163}
-	message := types.TtnMapperUplinkMessage{Latitude: -33.944952, Longitude: 18.861567}
-	bearing := GetBearingLive(gateway, message)
-	log.Println(bearing)
+func TestBearing(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		lat, lon float64
+		want     uint
+	}{
+		{"north", 1, 0, 0}, {"east", 0, 1, 90}, {"south", -1, 0, 180}, {"west", 0, -1, 270},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := GetBearingLive(types.TtnMapperGateway{}, types.TtnMapperUplinkMessage{Latitude: tc.lat, Longitude: tc.lon}); got != tc.want {
+				t.Errorf("live=%d, want %d", got, tc.want)
+			}
+			if got := GetBearingDatabase(database.Gateway{}, database.Packet{Latitude: tc.lat, Longitude: tc.lon}); got != tc.want {
+				t.Errorf("database=%d, want %d", got, tc.want)
+			}
+		})
+	}
 }
-
-func TestGetBearingFromPacket(t *testing.T) {
-	gateway := database.Gateway{Latitude: -33.936644228282525, Longitude: 18.87102216482163}
-	packet := database.Packet{Latitude: -33.944952, Longitude: 18.861567}
-	bearing := GetBearingDatabase(gateway, packet)
-	log.Println(bearing)
-}
-
-func TestGetDistanceFromGateway(t *testing.T) {
-	gateway := types.TtnMapperGateway{Latitude: -33.93648714508494, Longitude: 18.868361593713505}
-	message := types.TtnMapperUplinkMessage{Latitude: -33.93623234324361, Longitude: 18.871634206336243}
-	distance := GetDistanceLive(gateway, message)
-	log.Println(distance)
+func TestDistance(t *testing.T) {
+	if got := GetDistanceDatabase(database.Gateway{}, database.Packet{Longitude: 1}); math.Abs(got-111.195) > 0.01 {
+		t.Errorf("one equatorial degree = %f km", got)
+	}
+	for _, tc := range []struct {
+		km   float64
+		want bool
+	}{{0, false}, {0.1, true}, {200, true}, {200.1, false}} {
+		if got := CheckDistance(tc.km); got != tc.want {
+			t.Errorf("CheckDistance(%f)=%v", tc.km, got)
+		}
+	}
 }

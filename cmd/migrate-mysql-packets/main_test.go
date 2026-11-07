@@ -1,87 +1,38 @@
 package main
 
 import (
-	"log"
+	"database/sql"
 	"testing"
+	"time"
 	"ttnmapper-services/pkg/oldstack"
-	"ttnmapper-services/pkg/utils"
-
-	"github.com/kelseyhightower/envconfig"
 )
 
-func Init() {
-	err := envconfig.Process("", &myConfiguration)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-
-	log.Println("Init Mysql database")
-	mysqlContext := oldstack.DatabaseContext{
-		Host:     myConfiguration.MysqlHost,
-		Port:     myConfiguration.MysqlPort,
-		User:     myConfiguration.MysqlUser,
-		Database: myConfiguration.MysqlDatabase,
-		Password: myConfiguration.MysqlPassword,
-		DebugLog: myConfiguration.MysqlDebugLog,
-	}
-	mysqlContext.Init()
-}
-
 func TestMysqlPacketToUplink(t *testing.T) {
-	Init()
-	packet := oldstack.GetPacket(455916)
-	uplinkMessage := MysqlPacketToUplinkMessage(packet)
-	//log.Println(utils.PrettyPrint(uplinkMessage))
-	if uplinkMessage.UserId != "jpmeijers" {
-		t.Fatalf("userid wrong")
-	}
-
-	packet = oldstack.GetPacket(218190)
-	uplinkMessage = MysqlPacketToUplinkMessage(packet)
-	log.Println(utils.PrettyPrint(uplinkMessage))
-	if uplinkMessage.UserId != "http://pade.nl/lora/coverage.json" {
-		t.Fatalf("userid wrong")
-	}
-
-	packet = oldstack.GetPacket(340010)
-	uplinkMessage = MysqlPacketToUplinkMessage(packet)
-	log.Println(utils.PrettyPrint(uplinkMessage))
-	if uplinkMessage.UserId != "JPM - Enschede" {
-		t.Fatalf("userid wrong")
-	}
-
-	packet = oldstack.GetPacket(3400100)
-	uplinkMessage = MysqlPacketToUplinkMessage(packet)
-	log.Println(utils.PrettyPrint(uplinkMessage))
-	if uplinkMessage.UserId != "f5hugGDXunU" {
-		t.Fatalf("userid wrong")
-	}
-	if uplinkMessage.AccuracySource != "fused" {
-		t.Fatalf("accuracy source wrong")
-	}
-}
-
-func TestGetPackets(t *testing.T) {
-	Init()
-	mysqlPackets := oldstack.GetPackets(1, 32402)
-
-	for _, mPacket := range mysqlPackets {
-		log.Println(utils.PrettyPrint(mPacket))
-		uplinkMessage := MysqlPacketToUplinkMessage(mPacket)
-		log.Println(utils.PrettyPrint(uplinkMessage))
-		if uplinkMessage.AccuracySource != "gps" {
-			t.Fatalf("accuracy must be from gps")
-		}
-	}
-
-	mysqlPackets = oldstack.GetPackets(1, 227388)
-
-	for _, mPacket := range mysqlPackets {
-		log.Println(utils.PrettyPrint(mPacket))
-		uplinkMessage := MysqlPacketToUplinkMessage(mPacket)
-		log.Println(utils.PrettyPrint(uplinkMessage))
-		if uplinkMessage.AccuracySource != "ios" {
-			t.Fatalf("accuracy must be from ios")
-		}
+	for _, tc := range []struct {
+		name, provider, user, wantUser, wantSource string
+		valid                                      bool
+	}{
+		{"legacy accuracy", "gps", "", "", "gps", true},
+		{"legacy user", "mapper", "", "mapper", "", true},
+		{"separate fields", "fused", "mapper", "mapper", "fused", true},
+		{"no provider", "", "mapper", "mapper", "", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			packet := oldstack.Packet{Time: time.Unix(1600000000, 123), NodeAddr: "device", AppId: sql.NullString{String: "app", Valid: true}, GatewayAddr: "001122334455aabb", Frequency: 868.1, DataRate: sql.NullString{String: "SF9BW125", Valid: true}, Provider: sql.NullString{String: tc.provider, Valid: tc.valid}, UserId: tc.user, Latitude: -33.9, Longitude: 18.8, Rssi: -90, Snr: 5}
+			got := MysqlPacketToUplinkMessage(packet)
+			if got.UserId != tc.wantUser || got.AccuracySource != tc.wantSource {
+				t.Errorf("user=%q source=%q", got.UserId, got.AccuracySource)
+			}
+			if got.Time != 1600000000000000123 || got.AppID != "app" || got.DevID != "device" || got.Frequency != 868100000 || got.Modulation != "LORA" || got.SpreadingFactor != 9 || got.Bandwidth != 125000 || got.Latitude != -33.9 || got.Longitude != 18.8 {
+				t.Errorf("uplink=%+v", got)
+			}
+			if len(got.Gateways) != 1 {
+				t.Fatalf("gateways=%+v", got.Gateways)
+			}
+			gw := got.Gateways[0]
+			if gw.GatewayId != "eui-001122334455aabb" || gw.GatewayEui != "001122334455AABB" || gw.Rssi != -90 || gw.Snr != 5 {
+				t.Errorf("gateway=%+v", gw)
+			}
+		})
 	}
 }

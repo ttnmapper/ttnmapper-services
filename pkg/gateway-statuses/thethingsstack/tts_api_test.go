@@ -1,83 +1,30 @@
 package thethingsstack
 
 import (
-	"encoding/json"
-	"log"
-	"os"
+	"github.com/golang/protobuf/ptypes/timestamp"
+	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"testing"
-	"ttnmapper-services/pkg/utils"
 )
 
-func TestParseV3GatewayList(t *testing.T) {
-	buf, err := os.ReadFile("gateway-list-example.json")
-	if err != nil {
-		t.Fatalf(err.Error())
+func TestGatewayConversion(t *testing.T) {
+	gateway := Gateway{Ids: GatewayIds{GatewayId: "gateway", Eui: "001122334455AABB"}, Name: "test", Description: "description", GatewayServerAddress: "eu1"}
+	if _, err := TtsApiGatewayToTtnMapperGateway("tenant", gateway, nil); err == nil {
+		t.Fatal("missing status accepted")
 	}
-
-	var apiResponse V3Gateways
-	err = json.Unmarshal(buf, &apiResponse)
-	if err != nil {
-		t.Fatalf(err.Error())
-	}
-
-	//for i, ttsGateway := range apiResponse.Gateways {
-	//	log.Println(i)
-	//	//log.Println(utils.PrettyPrint(ttsGateway))
-	//	gateway, _ := TtsApiGatewayToTtnMapperGateway(ttsGateway)
-	//	log.Println(utils.PrettyPrint(gateway))
-	//}
-}
-
-func TestFetchTtsNetwork(t *testing.T) {
-
-	//tenantId := "jpmeijers"
-	//apiKey := "NNSXS."
-	//tenantId := "packetworx"
-	//apiKey := "NNSXS."
-	tenantId := "redyteliot"
-	apiKey := "NNSXS."
-
-	gateways, err := FetchGateways(tenantId, apiKey)
-	if err != nil {
-		log.Println(err.Error())
-	}
-
-	// Fetch gateway statuses in batches
-	gatewayCount := 0
-	batchSize := 50
-	for i := 0; i < len(gateways); i += batchSize {
-		log.Printf("[TTS API] Fetching batch of %d gateway statuses", batchSize)
-		endIndex := i + batchSize
-		if len(gateways) < endIndex {
-			endIndex = len(gateways)
-		}
-		currentlyFetchingGateways := gateways[i:endIndex]
-		gatewayStatuses, err := FetchStatusesBatch(currentlyFetchingGateways, apiKey)
-		if err != nil {
-			log.Println(err.Error())
-			continue
-		}
-		if gatewayStatuses.Entries == nil {
-			log.Println("[TTS API] Status Entries is nil")
-		}
-		// Iterate status responses
-		for gatewayId, status := range gatewayStatuses.Entries {
-			// Iterate fetched gateway list to find requested gateway's data
-			for _, gateway := range currentlyFetchingGateways {
-				// If we found the gateway, ie the id matches, update its status
-				if gateway.Ids.GatewayId == gatewayId {
-					log.Println(tenantId, gatewayId)
-					log.Println(utils.PrettyPrint(gateway))
-					ttnMapperGateway, err := TtsApiGatewayToTtnMapperGateway(tenantId, gateway, status)
-					if err != nil {
-						log.Println(err)
-						continue
-					}
-					log.Println(utils.PrettyPrint(ttnMapperGateway))
-					gatewayCount++
-				}
+	for _, tc := range []struct {
+		name                 string
+		status, uplink, want int64
+	}{
+		{"status newer", 200, 100, 200}, {"uplink newer", 100, 200, 200}, {"same", 100, 100, 100},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := TtsApiGatewayToTtnMapperGateway("tenant", gateway, &ttnpb.GatewayConnectionStats{LastStatusReceivedAt: &timestamp.Timestamp{Seconds: tc.status}, LastUplinkReceivedAt: &timestamp.Timestamp{Seconds: tc.uplink}})
+			if err != nil {
+				t.Fatal(err)
 			}
-		}
+			if got.NetworkId != "NS_TTS_V3://tenant@000013" || got.GatewayId != "gateway" || got.GatewayEui != "001122334455AABB" || got.Time != tc.want*1000000000 || got.Attributes["description"] != "description" || got.Attributes["cluster_id"] != "eu1" {
+				t.Fatalf("gateway = %+v", got)
+			}
+		})
 	}
-	log.Printf("[TTS API] Fetched %d gateway statuses for network %s", gatewayCount, tenantId)
 }

@@ -1,50 +1,23 @@
 package radar
 
 import (
-	"github.com/kelseyhightower/envconfig"
-	"log"
 	"testing"
 	"ttnmapper-services/pkg/database"
 )
 
-type Configuration struct {
-	PostgresHost     string `envconfig:"POSTGRES_HOST"`
-	PostgresPort     string `envconfig:"POSTGRES_PORT"`
-	PostgresUser     string `envconfig:"POSTGRES_USER"`
-	PostgresPassword string `envconfig:"POSTGRES_PASSWORD"`
-	PostgresDatabase string `envconfig:"POSTGRES_DATABASE"`
-	PostgresDebugLog bool   `envconfig:"POSTGRES_DEBUG_LOG"`
-}
-
-var myConfiguration = Configuration{
-	PostgresHost:     "localhost",
-	PostgresPort:     "5432",
-	PostgresUser:     "username",
-	PostgresPassword: "password",
-	PostgresDatabase: "database",
-	PostgresDebugLog: false,
-}
-
-func Init() {
-	err := envconfig.Process("", &myConfiguration)
-	if err != nil {
-		log.Fatal(err.Error())
+func TestAddBeamsToGatewayMulti(t *testing.T) {
+	beams := map[int]map[uint]database.RadarBeam{}
+	AddBeamsToGatewayMulti(beams, []database.RadarBeam{
+		{Level: -100, Bearing: 90, DistanceMax: 10, Distance2nd: 5},
+		{Level: -100, Bearing: 90, DistanceMax: 20, Distance2nd: 15},
+		{Level: -100, Bearing: 180, DistanceMax: 7, Distance2nd: 3},
+		{Level: -110, Bearing: 90, DistanceMax: 30, Distance2nd: 25},
+	})
+	got := beams[-100][90]
+	if got.DistanceMax != 20 || got.Distance2nd != 15 {
+		t.Fatalf("merged=%+v", got)
 	}
-
-	log.Println("Init database")
-	databaseContext := database.Context{
-		Host:     myConfiguration.PostgresHost,
-		Port:     myConfiguration.PostgresPort,
-		User:     myConfiguration.PostgresUser,
-		Database: myConfiguration.PostgresDatabase,
-		Password: myConfiguration.PostgresPassword,
-		DebugLog: myConfiguration.PostgresDebugLog,
+	if beams[-100][180].DistanceMax != 7 || beams[-110][90].DistanceMax != 30 {
+		t.Fatal("bearings or levels were combined")
 	}
-	databaseContext.Init()
-}
-
-func TestGenerateRadar(t *testing.T) {
-	Init()
-	radar := GenerateRadarMulti("NS_TTS_V3://ttn@000013", "eui-00007076ff032b50")
-	print(string(radar))
 }
