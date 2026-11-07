@@ -1,10 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
-	"time"
 	"ttnmapper-services/pkg/database"
 	"ttnmapper-services/pkg/queues"
 	"ttnmapper-services/pkg/types"
@@ -139,63 +137,12 @@ func main() {
 }
 
 func insertToPostgres(thread int) {
-	// Wait for a message and insert it into Postgres
-	for d := range messageChannel {
-		log.Printf("[%d][p] Processing packet", thread)
-
-		// The message from amqp is a json string. Unmarshal to ttnmapper uplink struct
-		var message types.TtnMapperUplinkMessage
-		if err := json.Unmarshal(d.Body, &message); err != nil {
-			log.Printf("[%d][p] "+err.Error(), thread)
-			d.Ack(false)
-			continue
+	store := packetStore{database.UplinkMessageToPacket, database.InsertPacket}
+	for delivery := range messageChannel {
+		if err := processDelivery(delivery, store, func(message types.TtnMapperUplinkMessage) { insertedChannel <- message }); err != nil {
+			log.Printf("[%d][p] %v", thread, err)
+			utils.FailOnError(err, "Raw insertion failed")
 		}
-
-		// If coordinates are invalid, do not store - even if it's an experiment
-		if message.Latitude == 0 && message.Longitude == 0 {
-			log.Printf("[%d][p] Null island %s - %s - %s - %s", thread, message.NetworkId, message.AppID, message.DevID, message.UserId)
-			invalidLocations.Inc()
-			d.Ack(false)
-			continue
-		}
-
-		// Iterate gateways. We store it flat in the database
-		for _, gateway := range message.Gateways {
-			gatewayStart := time.Now()
-
-			// If RSSI is larger than -50, do not store. We've seen +2dBm RSSI values from a bug in RAK Wireless gateways.
-			if gateway.Rssi > -50.0 {
-				continue
-			}
-
-			// Copy required fields in correct format into a database row struct
-			entry, err := database.UplinkMessageToPacket(message, gateway)
-			if err != nil {
-				log.Printf(err.Error())
-				continue
-			}
-
-			// Insert into database
-			err = database.InsertPacket(&entry)
-			if err == nil {
-				log.Printf("[%d][p] Inserted entry id=%d", thread, entry.ID)
-				dbInserts.Inc()
-			} else {
-				log.Println(utils.PrettyPrint(entry))
-				log.Printf("[%d][p] PG Insert", thread)
-				utils.FailOnError(err, "")
-			}
-
-			// Prometheus stats
-			gatewayElapsed := time.Since(gatewayStart)
-			insertDuration.Observe(float64(gatewayElapsed.Nanoseconds()) / 1000.0 / 1000.0) //nanoseconds to milliseconds
-		}
-
-		// If we get here all inserts were successful. Otherwise we would have quit.
-		d.Ack(false)
-
-		insertedChannel <- message
 	}
-
 	log.Fatal("Messages channel closed")
 }
