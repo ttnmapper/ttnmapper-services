@@ -34,6 +34,15 @@ On 7 November 2026, the remaining live-system checks were replaced or removed:
 - APRS processing uses injected database callbacks and in-memory channels, covering
   malformed input, registration, lookup failure, duplicate suppression and frames.
   Rate-limit tests exercise first reports, boundaries and device separation.
+- Gateway-channels tests cover malformed and empty packets, gateway normalization,
+  repeated reception counts, identity-separated caches and failures at each storage
+  step. Frequency results now populate the frequency cache; association write errors
+  are propagated to the service's existing fatal error handler.
+- WebSocket hub tests cover combined application/device/user/experiment filters,
+  JSON delivery, slow-client removal, repeated unregister, invalid packets and loop
+  shutdown. The two services also pass their isolated suites with `go test -race`.
+  These tests use in-memory channels and fake storage, not RabbitMQ, PostgreSQL or
+  real WebSocket connections.
 - Tile-server legacy database checks use cached synthetic last-heard timestamps;
   tile-range checks now assert expected bounds. Existing isolated regressions remain.
 - Manual schema-migration, bulk reprocessing and database mutation checks were

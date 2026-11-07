@@ -4,85 +4,76 @@
 
 package main
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"ttnmapper-websockets-live/types"
+)
 
-// Hub maintains the set of active clients and broadcasts messages to the
-// clients.
+// Hub owns client registration and delivers packets matching all supplied filters.
+// Its state is accessed only by the run loop.
 type Hub struct {
-	// Registered clients.
-	clients map[*Client]bool
-
-	// Inbound messages from the clients.
-	broadcast chan []byte
-
-	// Register requests from the clients.
-	register chan *Client
-
-	// Unregister requests from clients.
+	clients    map[*Client]bool
+	broadcast  chan []byte
+	register   chan *Client
 	unregister chan *Client
 }
 
 func newHub() *Hub {
-	return &Hub{
-		broadcast:  make(chan []byte),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
-		clients:    make(map[*Client]bool),
-	}
+	return &Hub{clients: make(map[*Client]bool), broadcast: make(chan []byte), register: make(chan *Client), unregister: make(chan *Client)}
 }
+func (h *Hub) run() { h.runMessages(messageChannel, nil) }
 
-func (h *Hub) run() {
+// A nil stop channel keeps the production loop running. Tests can stop it cleanly.
+func (h *Hub) runMessages(messages <-chan types.TtnMapperUplinkMessage, stop <-chan struct{}) {
+	defer func() {
+		for client := range h.clients {
+			h.removeClient(client)
+		}
+	}()
 	for {
 		select {
+		case <-stop:
+			return
 		case client := <-h.register:
 			h.clients[client] = true
 		case client := <-h.unregister:
-			if _, ok := h.clients[client]; ok {
-				delete(h.clients, client)
-				close(client.send)
+			h.removeClient(client)
+		case message, ok := <-messages:
+			if !ok {
+				return
 			}
-		case message := <-messageChannel:
-			for client := range h.clients {
-
-				if client.applicationId == "" && client.deviceId == "" && client.userId == "" && client.experiment == "" {
-					// Need to have at least one filter
-					continue
-				}
-
-				if client.applicationId != "" {
-					if message.AppID != client.applicationId {
-						continue
-					}
-				}
-				if client.deviceId != "" {
-					if message.DevID != client.deviceId {
-						continue
-					}
-				}
-				if client.userId != "" {
-					if message.UserId != client.userId {
-						continue
-					}
-				}
-
-				if client.experiment != "" {
-					if message.Experiment != client.experiment {
-						continue
-					}
-				}
-
-				data, err := json.Marshal(message)
-				if err != nil {
-					continue
-				}
-
-				select {
-				case client.send <- data:
-				default:
-					close(client.send)
-					delete(h.clients, client)
-				}
-			}
+			h.deliver(message)
+		}
+	}
+}
+func (h *Hub) removeClient(client *Client) {
+	if _, ok := h.clients[client]; ok {
+		delete(h.clients, client)
+		close(client.send)
+	}
+}
+func (c *Client) matches(message types.TtnMapperUplinkMessage) bool {
+	if c.applicationId == "" && c.deviceId == "" && c.userId == "" && c.experiment == "" {
+		return false
+	}
+	return (c.applicationId == "" || c.applicationId == message.AppID) &&
+		(c.deviceId == "" || c.deviceId == message.DevID) &&
+		(c.userId == "" || c.userId == message.UserId) &&
+		(c.experiment == "" || c.experiment == message.Experiment)
+}
+func (h *Hub) deliver(message types.TtnMapperUplinkMessage) {
+	data, err := json.Marshal(message)
+	if err != nil {
+		return
+	}
+	for client := range h.clients {
+		if !client.matches(message) {
+			continue
+		}
+		select {
+		case client.send <- data:
+		default:
+			h.removeClient(client)
 		}
 	}
 }
