@@ -34,6 +34,21 @@ On 7 November 2026, the remaining live-system checks were replaced or removed:
 - APRS processing uses injected database callbacks and in-memory channels, covering
   malformed input, registration, lookup failure, duplicate suppression and frames.
   Rate-limit tests exercise first reports, boundaries and device separation.
+- Raw packet conversion tests cover lookup inputs and IDs, nanosecond timestamps,
+  precision/range handling, optional fields, cache identity and lookup-error retries.
+- Raw insertion tests cover malformed/null-island messages, RSSI filtering,
+  conversion/write/acknowledgement failures, and forwarding only stored gateways.
+  Failed storage leaves the delivery unacknowledged and unpublished; earlier writes
+  are not rolled back. This is not a transaction or an exactly-once delivery guarantee.
+- Live grid/radar aggregation tests use fake storage and known coordinates to check
+  repeated samples, signal boundaries, bearings/distances, invalid inputs and lookup/
+  write failures. Live radar now uses database gateway coordinates for bearings;
+  caches are updated only after successful saves. Save errors are surfaced by the
+  database helpers and logged by the live aggregators.
+- Aggregate command tests verify experiment filtering and moved-gateway routing to
+  all antennas with the database's last-move cutoff. Actual database replay,
+  delete/rebuild atomicity and RabbitMQ acknowledgement/redelivery still require
+  integration coverage. The affected unit suites also pass with the race detector.
 - Gateway-channels tests cover malformed and empty packets, gateway normalization,
   repeated reception counts, identity-separated caches and failures at each storage
   step. Frequency results now populate the frequency cache; association write errors

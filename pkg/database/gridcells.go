@@ -11,8 +11,8 @@ func GetGridCell(indexer GridCellIndexer) (GridCell, error) {
 	return gridCell, err
 }
 
-func SaveGridCell(gridCell GridCell) {
-	Db.Save(&gridCell)
+func SaveGridCell(gridCell GridCell) error {
+	return Db.Save(&gridCell).Error
 }
 
 func GetGridcellsForAntenna(antenna Antenna) []GridCell {

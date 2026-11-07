@@ -8,7 +8,6 @@ import (
 	utils2 "ttnmapper-services/pkg/aggregations/utils"
 	"ttnmapper-services/pkg/database"
 	"ttnmapper-services/pkg/types"
-	"ttnmapper-services/pkg/utils"
 )
 
 const ()
@@ -18,43 +17,47 @@ var (
 	radarBeamDbCache sync.Map
 )
 
+type liveStore struct {
+	gateway func(database.GatewayIndexer) (database.Gateway, error)
+	antenna func(string, string, uint8) database.Antenna
+	get     func(uint, int, uint) (database.RadarBeam, error)
+	save    func(database.RadarBeam) error
+}
+
 func AggregateNewData(message types.TtnMapperUplinkMessage) {
-	if message.Experiment != "" {
+	aggregateNewData(message, liveStore{database.GetGateway, database.FindAntenna, getRadarBeam, database.SaveRadarBeam})
+}
+func aggregateNewData(message types.TtnMapperUplinkMessage, store liveStore) {
+	if message.Experiment != "" || message.Latitude == 0 && message.Longitude == 0 {
 		return
 	}
-	if message.Latitude == 0 && message.Longitude == 0 {
-		return
-	}
-
-	// Iterate gateways. We store it flat in the database
 	for _, gateway := range message.Gateways {
-		// If the point is too far from the gateway, ignore it
-		if !utils2.CheckDistanceFromGateway(gateway, message) {
+		location, err := store.gateway(database.GatewayIndexer{NetworkId: gateway.NetworkId, GatewayId: gateway.GatewayId})
+		if err != nil || location.Latitude == 0 && location.Longitude == 0 {
 			continue
 		}
-
-		antennaID := database.FindAntenna(gateway.NetworkId, gateway.GatewayId, gateway.AntennaIndex).ID
-		if antennaID == 0 {
-			log.Println("Can't find antenna in database")
+		packet := database.Packet{Latitude: message.Latitude, Longitude: message.Longitude}
+		distance := utils2.GetDistanceDatabase(location, packet)
+		if !utils2.CheckDistance(distance) {
 			continue
 		}
-		log.Print("AntennaID ", antennaID)
-
-		seconds := message.Time / 1000000000
-		nanos := message.Time % 1000000000
-		entryTime := time.Unix(seconds, nanos)
-
+		antenna := store.antenna(gateway.NetworkId, gateway.GatewayId, gateway.AntennaIndex)
+		if antenna.ID == 0 {
+			continue
+		}
+		entryTime := time.Unix(0, message.Time)
 		level := getLevel(gateway)
-		bearing := utils2.GetBearingLive(gateway, message)
-		distance := utils2.GetDistanceLive(gateway, message) * 1000.0 // km to metres
-
-		radarBeam, err := getRadarBeam(antennaID, level, bearing)
+		bearing := utils2.GetBearingDatabase(location, packet)
+		entry, err := store.get(antenna.ID, level, bearing)
 		if err != nil {
 			continue
 		}
-		incrementRadarBeam(&radarBeam, entryTime, distance)
-		storeRadarBeamInCache(radarBeam)
-		database.SaveRadarBeam(radarBeam)
+		incrementRadarBeam(&entry, entryTime, distance*1000)
+		if err := store.save(entry); err != nil {
+			log.Print(err)
+			continue
+		}
+		storeRadarBeamInCache(entry)
 	}
 }
 
@@ -197,7 +200,7 @@ func getRadarBeam(antennaId uint, level int, bearing uint) (database.RadarBeam, 
 		radarBeamDb, err = database.GetRadarBeam(radarBeamIndexer)
 		if err != nil {
 			log.Print(antennaId, level, bearing)
-			utils.FailOnError(err, "Failed to find db entry for radar beam")
+			return database.RadarBeam{}, err
 		}
 	}
 	return radarBeamDb, nil

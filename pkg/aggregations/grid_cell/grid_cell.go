@@ -10,53 +10,51 @@ import (
 	utils2 "ttnmapper-services/pkg/aggregations/utils"
 	"ttnmapper-services/pkg/database"
 	"ttnmapper-services/pkg/types"
-	"ttnmapper-services/pkg/utils"
 )
 
 var (
 	gridCellDbCache sync.Map
 )
 
+type liveStore struct {
+	gateway func(database.GatewayIndexer) (database.Gateway, error)
+	antenna func(string, string, uint8) database.Antenna
+	get     func(uint, float64, float64) (database.GridCell, error)
+	save    func(database.GridCell) error
+}
+
 func AggregateNewData(message types.TtnMapperUplinkMessage) {
-	if message.Experiment != "" {
+	aggregateNewData(message, liveStore{database.GetGateway, database.FindAntenna, getGridCell, database.SaveGridCell})
+}
+func aggregateNewData(message types.TtnMapperUplinkMessage, store liveStore) {
+	if message.Experiment != "" || message.Latitude == 0 && message.Longitude == 0 {
 		return
 	}
-	if message.Latitude == 0 && message.Longitude == 0 {
-		return
-	}
-
-	// Iterate gateways. We store it flat in the database
 	for _, gateway := range message.Gateways {
-		// If the point is too far from the gateway, ignore it
-		gatewayPoint, err := utils2.GetPointForNetworkGateway(gateway.NetworkId, gateway.GatewayId)
+		location, err := store.gateway(database.GatewayIndexer{NetworkId: gateway.NetworkId, GatewayId: gateway.GatewayId})
+		if err != nil || location.Latitude == 0 && location.Longitude == 0 {
+			continue
+		}
+		packet := database.Packet{Latitude: message.Latitude, Longitude: message.Longitude}
+		distance := utils2.GetDistanceDatabase(location, packet)
+		if !utils2.CheckDistance(distance) {
+			continue
+		}
+		antenna := store.antenna(gateway.NetworkId, gateway.GatewayId, gateway.AntennaIndex)
+		if antenna.ID == 0 {
+			continue
+		}
+		entryTime := time.Unix(0, message.Time)
+		entry, err := store.get(antenna.ID, message.Latitude, message.Longitude)
 		if err != nil {
 			continue
 		}
-		gateway.Latitude = gatewayPoint.Lat()
-		gateway.Longitude = gatewayPoint.Lng()
-		if !utils2.CheckDistanceFromGateway(gateway, message) {
+		incrementBucket(&entry, entryTime, gateway.Rssi, gateway.Snr)
+		if err := store.save(entry); err != nil {
+			log.Print(err)
 			continue
 		}
-
-		antennaID := database.FindAntenna(gateway.NetworkId, gateway.GatewayId, gateway.AntennaIndex).ID
-		if antennaID == 0 {
-			log.Println("Can't find antenna in database")
-			continue
-		}
-		log.Print("AntennaID ", antennaID)
-
-		seconds := message.Time / 1000000000
-		nanos := message.Time % 1000000000
-		entryTime := time.Unix(seconds, nanos)
-
-		gridCell, err := getGridCell(antennaID, message.Latitude, message.Longitude)
-		if err != nil {
-			continue
-		}
-		incrementBucket(&gridCell, entryTime, gateway.Rssi, gateway.Snr)
-		storeGridCellInCache(gridCell)
-		//storeGridCellInDb(gridCell)
-		database.SaveGridCell(gridCell)
+		storeGridCellInCache(entry)
 	}
 }
 
@@ -168,7 +166,7 @@ func getGridCell(antennaId uint, latitude float64, longitude float64) (database.
 		gridCellDb, err = database.GetGridCell(gridCellIndexer)
 		if err != nil {
 			log.Print(antennaId, latitude, longitude, tile.X, tile.Y)
-			utils.FailOnError(err, "Failed to find db entry for grid cell")
+			return database.GridCell{}, err
 		}
 	}
 	return gridCellDb, nil

@@ -20,3 +20,19 @@ func TestIncrementRadarBeam(t *testing.T) {
 		t.Fatalf("beam=%+v", beam)
 	}
 }
+
+func TestSignalLevelBoundaries(t *testing.T) {
+	for _, tc := range []struct {
+		rssi, snr float32
+		want      int
+	}{
+		{-99, 0, -100}, {-100, 0, -105}, {-104, 0, -105}, {-105, 0, -110},
+		{-110, 0, -115}, {-115, 0, -120}, {-120, 0, -200}, {-200, 0, -200},
+		{-99, -2, -105}, {-99, 10, -100},
+	} {
+		got := getLevelFromPacket(database.Packet{Rssi: tc.rssi, Snr: tc.snr})
+		if got != tc.want {
+			t.Errorf("rssi=%v snr=%v level=%d want=%d", tc.rssi, tc.snr, got, tc.want)
+		}
+	}
+}

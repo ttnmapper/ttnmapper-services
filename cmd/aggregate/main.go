@@ -155,14 +155,11 @@ func ReprocessGateways(gatewayIds []string) {
 }
 
 func ReprocessSingleGateway(gateway database.Gateway) {
-	/*
-		Find all antennas with same network and gateway id
-	*/
-	antennas := database.GetAntennaForGateway(gateway.NetworkId, gateway.GatewayId)
-	movedTime := database.GetGatewayLastMovedTime(gateway.NetworkId, gateway.GatewayId)
-	log.Println("Last move", movedTime)
-
-	for _, antenna := range antennas {
-		aggregations.ReprocessAntenna(antenna, movedTime)
+	reprocessGateway(gateway, database.GetAntennaForGateway, database.GetGatewayLastMovedTime, aggregations.ReprocessAntenna)
+}
+func reprocessGateway(gateway database.Gateway, antennas func(string, string) []database.Antenna, lastMoved func(string, string) time.Time, reprocess func(database.Antenna, time.Time)) {
+	moved := lastMoved(gateway.NetworkId, gateway.GatewayId)
+	for _, antenna := range antennas(gateway.NetworkId, gateway.GatewayId) {
+		reprocess(antenna, moved)
 	}
 }
