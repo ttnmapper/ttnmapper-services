@@ -17,7 +17,7 @@ import (
 
 type Configuration struct {
 	AmqpHost                 string `env:"AMQP_HOST"`
-	AmqpPort                 int `env:"AMQP_PORT"`
+	AmqpPort                 int    `env:"AMQP_PORT"`
 	AmqpUser                 string `env:"AMQP_USER"`
 	AmqpPassword             string `env:"AMQP_PASSWORD"`
 	AmqpExchangeRawData      string `env:"AMQP_EXCHANGE_RAW"`
@@ -25,16 +25,16 @@ type Configuration struct {
 	AmqpExchangeInsertedData string `env:"AMQP_EXCHANGE_INSERTED"`
 
 	PostgresHost          string `env:"POSTGRES_HOST"`
-	PostgresPort          int `env:"POSTGRES_PORT"`
+	PostgresPort          int    `env:"POSTGRES_PORT"`
 	PostgresUser          string `env:"POSTGRES_USER"`
 	PostgresPassword      string `env:"POSTGRES_PASSWORD"`
 	PostgresDatabase      string `env:"POSTGRES_DATABASE"`
 	PostgresDebugLog      bool   `env:"POSTGRES_DEBUG_LOG"`
 	PostgresInsertThreads int    `env:"POSTGRES_INSERT_THREADS"`
 
-	AprsServer string            `env:"APRS_SERVER"`
-	AprsRelayUser string         `env:"APRS_USER"`
-	AprsRelayPassword int        `env:"APRS_PASSWORD"`
+	AprsServer        string `env:"APRS_SERVER"`
+	AprsRelayUser     string `env:"APRS_USER"`
+	AprsRelayPassword int    `env:"APRS_PASSWORD"`
 
 	PrometheusPort string `env:"PROMETHEUS_PORT"`
 }
@@ -56,8 +56,8 @@ var myConfiguration = Configuration{
 	PostgresDebugLog:      false,
 	PostgresInsertThreads: 1,
 
-	AprsServer: "",
-	AprsRelayUser: "",
+	AprsServer:        "",
+	AprsRelayUser:     "",
 	AprsRelayPassword: 0,
 
 	PrometheusPort: "9100",
@@ -85,9 +85,9 @@ func main() {
 	// Connect to database
 	log.Println("Initialising database")
 	sqlCredentials := sqldb.Credentials{
-		Host: myConfiguration.PostgresHost,
-		Port: myConfiguration.PostgresPort,
-		User: myConfiguration.PostgresUser,
+		Host:     myConfiguration.PostgresHost,
+		Port:     myConfiguration.PostgresPort,
+		User:     myConfiguration.PostgresUser,
 		Password: myConfiguration.PostgresPassword,
 		Database: myConfiguration.PostgresDatabase,
 
@@ -98,13 +98,13 @@ func main() {
 	// Start amqp listener on this thread - blocking function
 	log.Println("Starting AMQP thread")
 	rabbitCredentials := rabbit.Credentials{
-		Host: myConfiguration.AmqpHost,
-		Port: myConfiguration.AmqpPort,
-		User: myConfiguration.AmqpUser,
+		Host:     myConfiguration.AmqpHost,
+		Port:     myConfiguration.AmqpPort,
+		User:     myConfiguration.AmqpUser,
 		Password: myConfiguration.AmqpPassword,
 		Exchange: myConfiguration.AmqpExchangeRawData,
-		Queue: myConfiguration.AmqpQueue,
-		AutoAck: true,
+		Queue:    myConfiguration.AmqpQueue,
+		AutoAck:  true,
 
 		MessagesChannel: messageChannel,
 	}
@@ -118,20 +118,26 @@ func main() {
 	ProcessMessages(messageChannel, aprsFramesChannel)
 }
 
-
 func ProcessMessages(messageChannel chan amqp.Delivery, aprsFramesChannel chan aprs.Frame) {
-	// Wait for a message and insert it into Postgres
+	processMessages(messageChannel, aprsFramesChannel, sqldb.IsAprsDevice, sqldb.GetAprsDevice)
+	log.Fatal("Messages channel closed")
+}
+
+// processMessages consumes a finite stream; database access is supplied by the caller.
+func processMessages(messageChannel <-chan amqp.Delivery, aprsFramesChannel chan<- aprs.Frame,
+	isDevice func(string, string, string) bool,
+	getDevice func(string, string, string) (sqldb.AprsDevice, error)) {
 	for d := range messageChannel {
 		//log.Printf(" [p] Processing packet")
 
 		// The message from amqp is a json string. Unmarshal to ttnmapper uplink struct
 		var message types.TtnMapperUplinkMessage
 		if err := json.Unmarshal(d.Body, &message); err != nil {
-			log.Printf(" [p] "+err.Error())
+			log.Printf(" [p] " + err.Error())
 			continue
 		}
 
-		if !sqldb.IsAprsDevice(message.NetworkId, message.AppID, message.DevID) {
+		if !isDevice(message.NetworkId, message.AppID, message.DevID) {
 			//log.Println(" [p] Not APRS device")
 			continue
 		}
@@ -142,7 +148,7 @@ func ProcessMessages(messageChannel chan amqp.Delivery, aprsFramesChannel chan a
 			continue
 		}
 
-		aprsDevice, err := sqldb.GetAprsDevice(message.NetworkId, message.AppID, message.DevID)
+		aprsDevice, err := getDevice(message.NetworkId, message.AppID, message.DevID)
 		if err != nil {
 			continue
 		}
@@ -168,5 +174,4 @@ func ProcessMessages(messageChannel chan amqp.Delivery, aprsFramesChannel chan a
 		CacheReportedMessage(message)
 	}
 
-	log.Fatal("Messages channel closed")
 }
