@@ -6,6 +6,8 @@ import (
 )
 
 type Context struct {
+	// ValidateEmail overrides DNS-backed validation when supplied; nil uses the production validator.
+	ValidateEmail  func(string) error
 	PublishChannel chan types.TtnMapperUplinkMessage
 }
 

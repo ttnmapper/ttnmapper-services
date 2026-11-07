@@ -28,7 +28,11 @@ func (handlerContext *Context) PostV3Uplink(w http.ResponseWriter, r *http.Reque
 
 	email := r.Header.Get("TTNMAPPERORG-USER")
 	log.Print("["+i+"] User: ", email)
-	if err := utils.ValidateEmail(email); err != nil {
+	validateEmail := handlerContext.ValidateEmail
+	if validateEmail == nil {
+		validateEmail = utils.ValidateEmail
+	}
+	if err := validateEmail(email); err != nil {
 		w.WriteHeader(http.StatusForbidden)
 		response["success"] = false
 		response["message"] = err.Error()

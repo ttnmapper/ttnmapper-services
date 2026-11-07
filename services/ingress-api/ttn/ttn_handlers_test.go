@@ -1,70 +1,93 @@
 package ttn
 
 import (
-	"log"
+	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 	"ttnmapper-ingress-api/types"
-	"ttnmapper-ingress-api/utils"
 )
 
-func TestHandlerJson(t *testing.T) {
-	var publishChannel = make(chan types.TtnMapperUplinkMessage, 1)
-	context := &Context{PublishChannel: publishChannel}
-
-	postbodies := []string{
-		`{"app_id":"jpm_crickets","dev_id":"cricket_001","hardware_serial":"00E150E95369A0B0","port":1,"counter":29932,"payload_raw":"AIj60loC4SUALuY=","payload_fields":{"gps_0":{"altitude":120.06,"latitude":-33.9366,"longitude":18.8709}},"metadata":{"time":"2020-04-05T13:26:44.519096325Z","frequency":868.1,"modulation":"LORA","data_rate":"SF7BW125","coding_rate":"4/5","gateways":[{"gtw_id":"eui-7276ff00080e0176","timestamp":3590545203,"time":"2020-04-05T13:26:44Z","channel":0,"rssi":-64,"snr":10,"rf_chain":0},{"gtw_id":"eui-b827ebfffed88375","gtw_trusted":true,"timestamp":510723987,"time":"2020-04-05T13:26:44Z","channel":0,"rssi":-60,"snr":9.75,"rf_chain":1,"latitude":-33.93597,"longitude":18.870806},{"gtw_id":"eui-647fdafffe007a1a","timestamp":587147324,"time":"","channel":5,"rssi":-54,"snr":10.2,"rf_chain":0},{"gtw_id":"eui-60c5a8fffe71a964","timestamp":2492163779,"time":"","channel":0,"rssi":-43,"snr":9,"rf_chain":0}]},"downlink_url":"https://integrations.thethingsnetwork.org/ttn-eu/api/v2/down/jpm_crickets/test-post-to-ttnmapper?key=ttn-account-v2.G7VmPspZFw8TGRJFk7bcSFM4hBCJrm00P-JQuOcG1TQ"}`,
-		`{"app_id":"homebug-qalcosonic-w1","dev_id":"05332403","hardware_serial":"0007090000515DB3","port":100,"counter":30,"payload_raw":"CsajXxABAAAAIOyiXwEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=","metadata":{"time":"2020-11-05T09:31:50.742526241Z","frequency":868.3,"modulation":"LORA","data_rate":"SF7BW125","airtime":112896000,"coding_rate":"4/5","gateways":[{"gtw_id":"eui-647fdafffe007a1a","timestamp":2079146396,"time":"","channel":6,"rssi":-47,"snr":8,"rf_chain":0},{"gtw_id":"eui-60c5a8fffe761551","timestamp":28410708,"time":"","channel":6,"rssi":-68,"snr":9.8,"rf_chain":0},{"gtw_id":"eui-58a0cbfffe80049a","timestamp":1526860595,"time":"2020-11-05T09:31:50.487390995Z","channel":0,"rssi":-61,"snr":10,"rf_chain":0},{"gtw_id":"eui-647fdafffe007a1f","timestamp":2815033635,"time":"","channel":1,"rssi":-85,"snr":10,"rf_chain":0},{"gtw_id":"eui-60c5a8fffe71a964","timestamp":48949428,"time":"","channel":6,"rssi":-87,"snr":10.3,"rf_chain":0,"latitude":34,"longitude":19,"altitude":1000}],"latitude":-33.93664,"longitude":18.870983,"location_source":"registry"}}`,
-	}
-
-	for _, postbody := range postbodies {
-		// Create a request to pass to our handler.
-		req, err := http.NewRequest("POST", "", strings.NewReader(postbody))
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		// Set request headers
-		req.Header.Set("Host", "private.ttnmapper.org")
-		req.Header.Set("User-Agent", "http-ttn/2.6.0")
-		req.Header.Set("Authorization", "test@jpmeijers.com")
-		req.Header.Set("Content-Type", "application/json")
-		req.Header.Set("Experiment", "test-experiment")
-
-		// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(context.PostTtnV2)
-
-		// Our handlers satisfy http.Handler, so we can call their ServeHTTP method
-		// directly and pass in our Request and ResponseRecorder.
-		handler.ServeHTTP(rr, req)
-
-		log.Println(rr.Body.String())
-
-		// Check the status code is what we expect.
-		if status := rr.Code; status != http.StatusAccepted {
-			t.Errorf("handler returned wrong status code: got %v want %v",
-				status, http.StatusAccepted)
-		}
-
-		// Check the response body is what we expect.
-		expected := `{"message":"New packet accepted into queue","success":true}`
-		if strings.TrimSpace(rr.Body.String()) != expected {
-			t.Errorf("handler returned unexpected body: got %v want %v", rr.Body.String(), expected)
-		}
-
-		// Check if a packet was written to the queue
-		select {
-		case packetOut, ok := <-publishChannel:
-			if ok {
-				log.Println(utils.PrettyPrint(packetOut))
-			} else {
-				t.Error("Channel closed!")
+// All requests use synthetic payloads, an in-memory queue and a local validator.
+func TestUplink(t *testing.T) {
+	for _, tc := range []struct {
+		name, body string
+		reject     bool
+		status     int
+		message    string
+	}{
+		{"accepted", `{"app_id":"app","dev_id":"device","port":1,"counter":42,"payload_fields":{"latitude":-33.9,"longitude":18.8,"altitude":10},"metadata":{"time":"2026-11-06T12:00:00Z"}}`, false, http.StatusAccepted, "New packet accepted into queue"},
+		{"invalid json", `{`, false, http.StatusBadRequest, "Can not parse json body"},
+		{"rejected user", `{`, true, http.StatusForbidden, "invalid test user"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			queue := make(chan types.TtnMapperUplinkMessage, 2)
+			calls := 0
+			ctx := &Context{PublishChannel: queue, ValidateEmail: func(email string) error {
+				calls++
+				if email != "mapper@example.invalid" {
+					t.Errorf("email = %q", email)
+				}
+				if tc.reject {
+					return errors.New("invalid test user")
+				}
+				return nil
+			}}
+			req := httptest.NewRequest(http.MethodPost, "/", strings.NewReader(tc.body))
+			req.Header.Set("Authorization", "mapper@example.invalid")
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("X-TTS-DOMAIN", "eu1.cloud.thethings.network")
+			req.Header.Set("User-Agent", "unit-test")
+			rr := httptest.NewRecorder()
+			ctx.PostTtnV2(rr, req)
+			if calls != 1 {
+				t.Fatalf("validation calls = %d", calls)
 			}
-		default:
-			t.Error("No value ready, moving on.")
-		}
+			if rr.Code != tc.status {
+				t.Fatalf("status = %d, want %d; body %s", rr.Code, tc.status, rr.Body.String())
+			}
+			var response struct {
+				Success bool
+				Message string
+			}
+			if err := json.Unmarshal(rr.Body.Bytes(), &response); err != nil {
+				t.Fatal(err)
+			}
+			accepted := tc.status == http.StatusAccepted
+			if response.Success != accepted || response.Message != tc.message {
+				t.Fatalf("response = %+v", response)
+			}
+			if !accepted {
+				if len(queue) != 0 {
+					t.Fatal("rejected request published a packet")
+				}
+				return
+			}
+			if len(queue) != 1 {
+				t.Fatalf("published %d packets, want one", len(queue))
+			}
+			packet := <-queue
+			if packet.AppID != "app" || packet.DevID != "device" || packet.FPort != 1 || packet.FCnt != 42 {
+				t.Errorf("identity = %+v", packet)
+			}
+			if packet.Latitude != -33.9 || packet.Longitude != 18.8 || packet.Altitude != 10 {
+				t.Errorf("location = %+v", packet)
+			}
+			if packet.UserId != "mapper@example.invalid" || packet.UserAgent != "unit-test" {
+				t.Errorf("source = %+v", packet)
+			}
+		})
+	}
+}
+
+func TestUplinkDefaultValidatorRejectsMissingUser(t *testing.T) {
+	queue := make(chan types.TtnMapperUplinkMessage, 1)
+	ctx := &Context{PublishChannel: queue}
+	rr := httptest.NewRecorder()
+	ctx.PostTtnV2(rr, httptest.NewRequest(http.MethodPost, "/", strings.NewReader(`{}`)))
+	if rr.Code != http.StatusForbidden || len(queue) != 0 {
+		t.Fatalf("status=%d queued=%d", rr.Code, len(queue))
 	}
 }

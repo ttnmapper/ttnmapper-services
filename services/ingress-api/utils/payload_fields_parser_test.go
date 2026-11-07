@@ -1,23 +1,17 @@
 package utils
 
 import (
-	"log"
 	"testing"
 	"ttnmapper-ingress-api/types"
 )
 
-func TestParsePayloadFields(t *testing.T) {
-
-	payloadFields := make(map[string]interface{})
-	payloadFields["latitude"] = 1.0
-	payloadFields["longitude"] = 2.0
-	payloadFields["altitude"] = 0.0
-
-	packetOut := types.TtnMapperUplinkMessage{}
-
-	_ = ParsePayloadFields(1, payloadFields, &packetOut)
-
-	SanitizeData(&packetOut)
-
-	log.Println(PrettyPrint(packetOut))
+func TestParsePayloadCoordinates(t *testing.T) {
+	var packet types.TtnMapperUplinkMessage
+	err := ParsePayloadFields(1, map[string]interface{}{"latitude": -33.9, "longitude": 18.8, "altitude": 10.0}, &packet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if packet.Latitude != -33.9 || packet.Longitude != 18.8 || packet.Altitude != 10 {
+		t.Fatalf("coordinates = %+v", packet)
+	}
 }
