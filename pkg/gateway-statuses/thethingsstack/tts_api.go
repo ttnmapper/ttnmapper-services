@@ -44,6 +44,9 @@ func FetchGateways(tenantId string, apiKey string) ([]Gateway, error) {
 	}
 
 	defer res.Body.Close()
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
+		return nil, fmt.Errorf("TTS request failed with HTTP status %d", res.StatusCode)
+	}
 
 	webData := V3Gateways{}
 	err = json.NewDecoder(res.Body).Decode(&webData)
@@ -54,6 +57,9 @@ func FetchGateways(tenantId string, apiKey string) ([]Gateway, error) {
 }
 
 func FetchStatusesBatch(gateways []Gateway, apiKey string) (ttnpb.BatchGetGatewayConnectionStatsResponse, error) {
+	if len(gateways) == 0 {
+		return ttnpb.BatchGetGatewayConnectionStatsResponse{}, errors.New("no gateways supplied")
+	}
 	// Use gateway_server_address with endpoint
 	// /api/v3/gs/gateways/connection/stats
 
@@ -70,6 +76,9 @@ func FetchStatusesBatch(gateways []Gateway, apiKey string) (ttnpb.BatchGetGatewa
 		//postData.GatewayIds = append(postData.GatewayIds, GatewayIds{GatewayId: gateway.Ids.GatewayId})
 	}
 	postJson, err := json.Marshal(postData)
+	if err != nil {
+		return ttnpb.BatchGetGatewayConnectionStatsResponse{}, err
+	}
 
 	log.Println(string(postJson))
 
@@ -78,6 +87,7 @@ func FetchStatusesBatch(gateways []Gateway, apiKey string) (ttnpb.BatchGetGatewa
 		return ttnpb.BatchGetGatewayConnectionStatsResponse{}, err
 	}
 
+	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", "ttnmapper-update-gateway")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
 
@@ -87,6 +97,9 @@ func FetchStatusesBatch(gateways []Gateway, apiKey string) (ttnpb.BatchGetGatewa
 	}
 
 	defer res.Body.Close()
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
+		return ttnpb.BatchGetGatewayConnectionStatsResponse{}, fmt.Errorf("TTS request failed with HTTP status %d", res.StatusCode)
+	}
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
@@ -127,6 +140,9 @@ func FetchStatus(gateway Gateway, apiKey string) (Status, error) {
 	}
 
 	defer res.Body.Close()
+	if res.StatusCode < http.StatusOK || res.StatusCode >= http.StatusMultipleChoices {
+		return Status{}, fmt.Errorf("TTS request failed with HTTP status %d", res.StatusCode)
+	}
 
 	webData := Status{}
 	err = json.NewDecoder(res.Body).Decode(&webData)
