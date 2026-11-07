@@ -16,14 +16,34 @@ services VM by the operator on 6 November 2026.
 
 ## Existing test limitations
 
-The full suite is not green. The imported ingress handler tests depend on DNS
-lookups for email validation and fail in the restricted test environment. Its
-committed `TestTtsV3Pb` fixture also panics in `CopyV3Fields`; the test and runtime
-implementation are unchanged from the source revision. The original ingress
-checkout's separate local test changes were not imported and were discarded during cleanup.
+The original ingress smoke tests depended on DNS for email validation and included
+an incomplete `TestTtsV3Pb` fixture that panicked in `CopyV3Fields`. On 7 November
+2026, these were replaced with isolated handler and conversion tests using
+synthetic payloads, injected email validation, and in-memory queues. Production
+email validation still uses DNS. Existing ingress validation and ChirpStack tests
+that already run locally are retained.
 
-Database/external-API tests have not been run against production. APRS tests can
-transmit packets or wait indefinitely and were compiled without executing them.
+On 7 November 2026, the remaining live-system checks were replaced or removed:
+
+- Gateway status fetches use an in-memory HTTP transport; conversion tests use
+  synthetic NOC, web, Helium, Packet Broker and TTS data.
+- Database tests cover parameter binding in GORM DryRun, cache separation and an
+  empty-batch guard. They do not verify execution or results against PostgreSQL.
+- MySQL packet migration conversion uses synthetic records rather than database IDs.
+- Aggregation and radar tests assert signal buckets, distances, bearings and merges.
+- APRS processing uses injected database callbacks and in-memory channels, covering
+  malformed input, registration, lookup failure, duplicate suppression and frames.
+  Rate-limit tests exercise first reports, boundaries and device separation.
+- Tile-server legacy database checks use cached synthetic last-heard timestamps;
+  tile-range checks now assert expected bounds. Existing isolated regressions remain.
+- Manual schema-migration, bulk reprocessing and database mutation checks were
+  discarded. An empty website authentication test was also removed. Those workflows
+  have no replacement end-to-end coverage.
+
+The full six-module suite passes locally with Go 1.27.3 using
+`GO_BIN=/snap/go/11382/bin/go GOCACHE=/tmp/ttnmapper-unit-go-cache scripts/check-go.sh test`.
+The script applies a 60-second per-package timeout. These checks do not establish
+production database behavior, live API availability, or APRS delivery.
 
 ## Small baseline repairs
 

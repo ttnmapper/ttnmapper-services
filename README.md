@@ -15,9 +15,17 @@ retain their existing names. Docker service names and executable names are uncha
 
 Run `scripts/check-go.sh build` to build every module. Set `GO_BIN` to select a Go
 executable. `compile-tests` compiles test packages without running test cases;
-`test` runs all tests and requires the external systems used by integration tests.
-Some existing tests contact PostgreSQL or external APIs, and the APRS socket test
-waits indefinitely. Do not run the full test mode against production systems.
+`test` runs the isolated suite across all six modules with a 60-second timeout
+per package. No production credentials, live databases, RabbitMQ or APRS servers
+are required. HTTP fetch tests use in-memory transports; database query tests use
+GORM DryRun with automatic ping disabled. Tile-server tests use temporary files
+and local fake executables and still require the module's native build dependencies.
+
+Legacy manual migration, reprocessing, status-fetch and APRS-send checks were
+removed. Their replacement unit tests cover selected logic, not database execution
+or end-to-end delivery. The website authentication test was an empty placeholder
+and was removed without claiming authentication coverage. Add future integration
+tests behind an explicit opt-in and use disposable infrastructure.
 
 Root `go build ./...` and `go test ./...` do not traverse nested Go modules. Use
 the script to cover the entire repository. Each module uses `-mod=vendor` and can

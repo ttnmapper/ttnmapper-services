@@ -15,6 +15,6 @@ for module in . services/websockets-live services/gateway-channels services/ttn-
   case "$mode" in
     build) "$go_bin" build -mod=vendor ./... ;;
     compile-tests) "$go_bin" test -mod=vendor -run '^$' ./... ;;
-    test) "$go_bin" test -mod=vendor ./... ;;
+    test) "$go_bin" test -mod=vendor -timeout 60s ./... ;;
   esac
 done
