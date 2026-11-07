@@ -12,6 +12,10 @@ Run started 2021-09-17 11:45 UTC
 */
 
 func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.TtnMapperGateway) (Packet, error) {
+	return uplinkMessageToPacket(message, gateway, func(record interface{}) error { return Db.FirstOrCreate(record, record).Error })
+}
+
+func uplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.TtnMapperGateway, resolve func(interface{}) error) (Packet, error) {
 	var entry = Packet{}
 
 	// Time
@@ -27,7 +31,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 	} else {
 		//log.Println("Get or create device from/in DB:", deviceIndexer)
 		deviceDb := Device{NetworkId: message.NetworkId, AppId: message.AppID, DevId: message.DevID, DevEui: message.DevEui}
-		err := Db.FirstOrCreate(&deviceDb, &deviceDb).Error
+		err := resolve(&deviceDb)
 		if err != nil {
 			return entry, err
 		}
@@ -45,7 +49,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 		entry.FrequencyID = i.(uint)
 	} else {
 		frequencyDb := Frequency{Herz: message.Frequency}
-		err := Db.FirstOrCreate(&frequencyDb, &frequencyDb).Error
+		err := resolve(&frequencyDb)
 		if err != nil {
 			return entry, err
 		}
@@ -68,7 +72,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 			Bandwidth:       message.Bandwidth,
 			SpreadingFactor: message.SpreadingFactor,
 			Bitrate:         message.Bitrate}
-		err := Db.FirstOrCreate(&dataRateDb, &dataRateDb).Error
+		err := resolve(&dataRateDb)
 		if err != nil {
 			return entry, err
 		}
@@ -82,7 +86,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 		entry.CodingRateID = i.(uint)
 	} else {
 		codingRateDb := CodingRate{Name: message.CodingRate}
-		err := Db.FirstOrCreate(&codingRateDb, &codingRateDb).Error
+		err := resolve(&codingRateDb)
 		if err != nil {
 			return entry, err
 		}
@@ -98,7 +102,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 		entry.AntennaID = i.(uint)
 	} else {
 		antennaDb := Antenna{NetworkId: gateway.NetworkId, GatewayId: gateway.GatewayId, AntennaIndex: gateway.AntennaIndex}
-		err := Db.FirstOrCreate(&antennaDb, &antennaDb).Error
+		err := resolve(&antennaDb)
 		if err != nil {
 			return entry, err
 		}
@@ -133,7 +137,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 	if gateway.FineTimestampEncryptedKeyId != "" {
 		// TODO: cache if this is done often
 		fineTimestampKeyId := FineTimestampKeyID{FineTimestampEncryptedKeyId: gateway.FineTimestampEncryptedKeyId}
-		err := Db.FirstOrCreate(&fineTimestampKeyId, &fineTimestampKeyId).Error
+		err := resolve(&fineTimestampKeyId)
 		if err != nil {
 			return entry, err
 		}
@@ -173,7 +177,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 		entry.AccuracySourceID = i.(uint)
 	} else {
 		accuracySourceDb := AccuracySource{Name: message.AccuracySource}
-		err := Db.FirstOrCreate(&accuracySourceDb, &accuracySourceDb).Error
+		err := resolve(&accuracySourceDb)
 		if err != nil {
 			return entry, err
 		}
@@ -189,7 +193,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 			entry.ExperimentID = &experimentId
 		} else {
 			experimentNameDb := Experiment{Name: message.Experiment}
-			err := Db.FirstOrCreate(&experimentNameDb, &experimentNameDb).Error
+			err := resolve(&experimentNameDb)
 			if err != nil {
 				return entry, err
 			}
@@ -204,7 +208,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 		entry.UserID = i.(uint)
 	} else {
 		userIdDb := User{Identifier: message.UserId}
-		err := Db.FirstOrCreate(&userIdDb, &userIdDb).Error
+		err := resolve(&userIdDb)
 		if err != nil {
 			return entry, err
 		}
@@ -218,7 +222,7 @@ func UplinkMessageToPacket(message types.TtnMapperUplinkMessage, gateway types.T
 		entry.UserAgentID = i.(uint)
 	} else {
 		userAgentDb := UserAgent{Name: message.UserAgent}
-		err := Db.FirstOrCreate(&userAgentDb, &userAgentDb).Error
+		err := resolve(&userAgentDb)
 		if err != nil {
 			return entry, err
 		}
