@@ -11,6 +11,5 @@ FROM scratch
 WORKDIR /root/
 
 COPY --from=builder /go-modules/aggregate .
-COPY conf.json .
 
 CMD ["./aggregate"]

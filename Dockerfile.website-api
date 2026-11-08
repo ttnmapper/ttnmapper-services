@@ -15,6 +15,5 @@ FROM scratch
 WORKDIR /root/
 
 COPY --from=builder /go-modules/website-api .
-COPY conf.json .
 
 CMD ["./website-api"]

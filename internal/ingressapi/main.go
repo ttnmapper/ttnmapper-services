@@ -1,7 +1,6 @@
 package ingressapi
 
 import (
-	"fmt"
 	"github.com/streadway/amqp"
 	"log"
 	"net/http"
@@ -34,9 +33,9 @@ var myConfiguration = Configuration{
 
 func Run() {
 
-	err := config.Load("conf.json", &myConfiguration)
+	err := config.Environment(&myConfiguration)
 	if err != nil {
-		fmt.Println(err)
+		log.Fatal("Invalid configuration: ", err)
 	}
 
 	log.Printf("[Configuration]\n%s\n", sharedutil.PrettyPrint(myConfiguration)) // output: [UserA, UserB]

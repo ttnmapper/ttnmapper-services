@@ -15,6 +15,5 @@ FROM scratch
 WORKDIR /root/
 
 COPY --from=builder /go-modules/ttn-to-aprs-bridge .
-COPY services/ttn-to-aprs-bridge/conf.default.json ./conf.json
 
 CMD ["./ttn-to-aprs-bridge"]

@@ -68,15 +68,8 @@ var MyConfiguration = Configuration{
 	SimCovMaxRasterGateways:    128,
 }
 
-// LoadConfiguration populates MyConfiguration from, in order of increasing priority:
-//  1. the hardcoded defaults above
-//  2. the JSON file at filename, if it exists (missing file is not an error)
-//  3. environment variables, as tagged on the Configuration struct
-//
-// This allows the service to start up using only environment variables (or even
-// just the defaults) when no config file is present, e.g. in a container image
-// that does not ship a conf.json.
-func LoadConfiguration(filename string) error { return config.Load(filename, &MyConfiguration) }
+// LoadConfiguration overlays the environment on the hardcoded defaults.
+func LoadConfiguration() error { return config.Environment(&MyConfiguration) }
 
 var (
 	PromTmsRequestDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{

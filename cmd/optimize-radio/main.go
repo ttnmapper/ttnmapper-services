@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// Load configuration
-	err := tms.LoadConfiguration("conf.json")
+	err := tms.LoadConfiguration()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}

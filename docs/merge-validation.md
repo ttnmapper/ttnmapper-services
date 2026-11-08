@@ -219,3 +219,13 @@ Fake-channel tests verify declaration/binding/acknowledgement flags, setup failu
 short-circuiting, publish properties, credential escaping and closed-channel
 handling. No live RabbitMQ instance was contacted. Service-specific packet parsing,
 processing and failure/restart policy remain at service boundaries.
+
+## Environment-only configuration (8 November 2026)
+
+At the operator's request, all services/tools now use only hardcoded defaults and
+environment variables. File parsing and tracked application configuration/templates
+are removed, along with configuration COPY instructions in the images. Imported
+services now reject invalid environment values at startup rather than continuing
+with partially parsed settings. Tests verify defaults, environment precedence,
+invalid types and that an existing `conf.json` has no effect. Tile gateway parameter
+files remain optimization state, not application startup configuration.

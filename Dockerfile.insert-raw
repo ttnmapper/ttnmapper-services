@@ -14,6 +14,5 @@ FROM scratch
 WORKDIR /root/
 
 COPY --from=builder /go-modules/postgres-insert-raw .
-COPY conf.json .
 
 CMD ["./postgres-insert-raw"]

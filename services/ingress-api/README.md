@@ -4,9 +4,9 @@ REST API where new raw measurement data will be received.
 
 # Configuration
 
-Configuration can be passed as environment variables, or by setting the values in conf.json. For the latter copy conf.json.template and edit the values.
+Configuration comes from environment variables over the defaults in `internal/ingressapi/main.go`. No configuration file is read.
 
-| JSON key | Type | ENV var key | Description |
+| Setting | Type | Environment variable | Description |
 | --- | --- | --- | --- |
 | AmqpHost     | string | AMQP_HOST | The hostname for the server where RabbitMQ is running.
 | AmqpPort     | string | AMQP_PORT | The port on which RabbitMQ is listening.

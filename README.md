@@ -98,10 +98,18 @@ from the default-branch head. Root-level Dockerfiles support every service.
 Example: `docker build -f Dockerfile.websockets-live -t websockets-live .`.
 The imported Dockerfiles also require the repository root as their build context.
 
-Imported service images use an empty `conf.default.json` to retain Go defaults
-and environment overrides. Source templates remain available as examples; real
-`conf.json` files are excluded from imported build contexts. Existing root worker
-configuration behavior remains unchanged.
+All services and maintenance tools use hardcoded defaults overlaid by environment
+variables. Configuration files are not read or included in images. Set environment
+variables directly or pass Docker an explicit `--env-file`; application startup does
+not automatically read `.env` files. Invalid typed values fail startup.
+
+Common settings include `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_USER`,
+`POSTGRES_PASSWORD`, `POSTGRES_DATABASE`, `POSTGRES_DEBUG_LOG`, `AMQP_HOST`,
+`AMQP_PORT`, `AMQP_USER`, `AMQP_PASSWORD`, and `PROMETHEUS_PORT`. Each service's
+`Configuration` and default values are in its `internal/<service>/main.go` (tile
+server: `common.go`). Existing queue-specific keys, including legacy spellings,
+remain unchanged. Tile-server `gateway_params.json` is persisted optimization data,
+not an application configuration file, and remains supported via `GATEWAY_PARAMS_FILE`.
 
 Production orchestration lives in the separate `ttnmapper-deployment` repository.
 Keep independent service processes, names, queues, API routes, and database schema

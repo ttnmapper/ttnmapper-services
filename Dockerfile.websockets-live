@@ -15,6 +15,5 @@ FROM scratch
 WORKDIR /root/
 
 COPY --from=builder /go-modules/websockets-live .
-COPY services/websockets-live/conf.default.json ./conf.json
 
 CMD ["./websockets-live"]

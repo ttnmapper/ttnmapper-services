@@ -47,8 +47,8 @@ Debug / comparison endpoints:
 We are adding simulated coverage layers, per gateway and per network.
 
 Simulations are produced by shelling out to an external [Signal-Server](https://github.com/Cloud-RF/Signal-Server) binary
-(configured via `SignalServerBin`), using the Longley-Rice (ITM) propagation model.
-Terrain is taken from Copernicus DEM tiles, which are downloaded on demand into `SignalServerSrtmDir`.
+(configured via `SIGNAL_SERVER_BIN`), using the Longley-Rice (ITM) propagation model.
+Terrain is taken from Copernicus DEM tiles, which are downloaded on demand into `SIGNAL_SERVER_SRTM_DIR`.
 Simulation results are cached to disk per gateway (a `.gob` sample cache plus the raw `.tif`) and re-used to
 render individual map tiles.
 
@@ -75,15 +75,15 @@ Tuning the simulations further from the measured packets / aggregated z19 tiles 
 
 ## Configuration
 
-Configuration is read from `conf.json` (see `conf.json.template`). Notable keys:
+Configuration uses environment variables over the defaults in `internal/tilemapserver/common.go`. No configuration file is read. Notable variables:
 
-- `SignalServerBin` — path to the Signal-Server executable (required for simulations). The
+- `SIGNAL_SERVER_BIN` — path to the Signal-Server executable (required for simulations). The
   Docker image builds [Signal-Server](https://github.com/loorisr/Signal-Server) from source
   and installs it at `/usr/local/bin/signalserver` (the default).
-- `SignalServerSrtmDir` — directory for Copernicus DEM tiles
-- `GatewayParamsFile` — per-gateway simulation parameters (e.g. `gateway_params.json`)
-- `SimCovRadiusKm` — how far, in km, each gateway's coverage is simulated
-- `CacheEnabled`, `CacheDirSimCov` — enable and locate the on-disk tile / simulation caches
+- `SIGNAL_SERVER_SRTM_DIR` — directory for Copernicus DEM tiles
+- `GATEWAY_PARAMS_FILE` — per-gateway simulation parameters (e.g. `gateway_params.json`)
+- `SIMCOV_RADIUS_KM` — how far, in km, each gateway's coverage is simulated
+- `CACHE_ENABLED`, `CACHE_DIR_SIMCOV` — enable and locate the on-disk tile / simulation caches
 
 ### Simulation CPU budget
 

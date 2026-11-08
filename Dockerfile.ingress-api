@@ -15,6 +15,5 @@ FROM scratch
 WORKDIR /root/
 
 COPY --from=builder /go-modules/ingress-api .
-COPY services/ingress-api/conf.default.json ./conf.json
 
 CMD ["./ingress-api"]

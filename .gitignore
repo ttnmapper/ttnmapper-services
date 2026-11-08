@@ -35,4 +35,8 @@ _testmain.go
 build/
 
 # Don't add our secrets to git
-#conf.json
+**/conf.json
+# Local environment overrides are provided explicitly to the process/container.
+.env
+.env.*
+!.env.example

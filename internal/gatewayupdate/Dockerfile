@@ -17,6 +17,5 @@ COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 WORKDIR /root/
 
 COPY --from=builder /go-modules/gateway-update .
-COPY conf.json .
 
 CMD ["./gateway-update"]

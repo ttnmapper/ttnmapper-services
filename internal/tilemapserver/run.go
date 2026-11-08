@@ -36,7 +36,7 @@ func prometheusMiddleware(next http.Handler) http.Handler {
 
 func Run() {
 
-	err := LoadConfiguration("conf.json")
+	err := LoadConfiguration()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}

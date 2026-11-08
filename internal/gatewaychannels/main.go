@@ -73,9 +73,9 @@ var (
 
 func Run() {
 
-	err := config.Load("conf.json", &myConfiguration)
+	err := config.Environment(&myConfiguration)
 	if err != nil {
-		log.Println(err)
+		log.Fatal("Invalid configuration: ", err)
 	}
 
 	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
