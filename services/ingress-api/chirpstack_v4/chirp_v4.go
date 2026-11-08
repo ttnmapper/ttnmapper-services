@@ -2,7 +2,7 @@ package chirpstack_v4
 
 import (
 	"github.com/go-chi/chi"
-	"ttnmapper-ingress-api/types"
+	"ttnmapper-services/services/ingress-api/types"
 )
 
 type Context struct {

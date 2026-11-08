@@ -2,5 +2,3 @@
 .idea
 .run
 build
-# Standalone modules use their own subdirectory as the Docker build context.
-services

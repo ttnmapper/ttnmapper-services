@@ -6,7 +6,7 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"testing"
 	"time"
-	"ttnmapper-ingress-api/types"
+	"ttnmapper-services/services/ingress-api/types"
 )
 
 // This complete synthetic uplink includes the network IDs absent from the old fixture.

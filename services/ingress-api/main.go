@@ -7,8 +7,8 @@ import (
 	"github.com/tkanos/gonfig"
 	"log"
 	"net/http"
-	"ttnmapper-ingress-api/types"
-	"ttnmapper-ingress-api/utils"
+	"ttnmapper-services/services/ingress-api/types"
+	"ttnmapper-services/services/ingress-api/utils"
 )
 import "github.com/go-chi/chi"
 

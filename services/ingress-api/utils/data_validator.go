@@ -3,7 +3,7 @@ package utils
 import (
 	"errors"
 	"math"
-	"ttnmapper-ingress-api/types"
+	"ttnmapper-services/services/ingress-api/types"
 )
 
 func CheckData(packet types.TtnMapperUplinkMessage) error {

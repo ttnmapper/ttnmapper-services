@@ -12,8 +12,8 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
-	"ttnmapper-ingress-api/types"
-	"ttnmapper-ingress-api/utils"
+	"ttnmapper-services/services/ingress-api/types"
+	"ttnmapper-services/services/ingress-api/utils"
 
 	"github.com/chirpstack/chirpstack/api/go/v4/integration"
 )

@@ -9,10 +9,10 @@ import (
 	"github.com/tkanos/gonfig"
 	"log"
 	"net/http"
-	"ttn-to-aprs-bridge/rabbit"
-	"ttn-to-aprs-bridge/sqldb"
-	"ttn-to-aprs-bridge/types"
-	"ttn-to-aprs-bridge/utils"
+	"ttnmapper-services/services/ttn-to-aprs-bridge/rabbit"
+	"ttnmapper-services/services/ttn-to-aprs-bridge/sqldb"
+	"ttnmapper-services/services/ttn-to-aprs-bridge/types"
+	"ttnmapper-services/services/ttn-to-aprs-bridge/utils"
 )
 
 type Configuration struct {
@@ -133,7 +133,7 @@ func processMessages(messageChannel <-chan amqp.Delivery, aprsFramesChannel chan
 		// The message from amqp is a json string. Unmarshal to ttnmapper uplink struct
 		var message types.TtnMapperUplinkMessage
 		if err := json.Unmarshal(d.Body, &message); err != nil {
-			log.Printf(" [p] " + err.Error())
+			log.Print(" [p] ", err)
 			continue
 		}
 

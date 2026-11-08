@@ -15,7 +15,7 @@ import (
 	"sync"
 	"time"
 
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 
 	"github.com/gorilla/mux"
 )

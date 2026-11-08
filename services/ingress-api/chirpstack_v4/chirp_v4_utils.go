@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"ttnmapper-ingress-api/types"
-	"ttnmapper-ingress-api/utils"
+	"ttnmapper-services/services/ingress-api/types"
+	"ttnmapper-services/services/ingress-api/utils"
 )
 
 func ParseChirpV4Payload(packetIn integration.UplinkEvent, packetOut *types.TtnMapperUplinkMessage) error {

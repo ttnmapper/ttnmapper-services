@@ -11,7 +11,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"ttnmapper-gateway-channels/types"
+	"ttnmapper-services/services/gateway-channels/types"
 )
 
 type Configuration struct {

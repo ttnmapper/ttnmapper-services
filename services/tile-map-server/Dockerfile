@@ -23,7 +23,7 @@ COPY . ./
 # Building using -mod=vendor, which will utilize the v
 #RUN go get
 #RUN go mod vendor
-RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o tile-map-server ./cmd/tms
+RUN CGO_ENABLED=0 GOOS=linux go build -v -mod=vendor -o tile-map-server  ./services/tile-map-server/cmd/tms
 
 FROM ubuntu:24.04
 

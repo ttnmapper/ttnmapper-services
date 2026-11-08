@@ -6,12 +6,12 @@ import (
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/render"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"ttnmapper-ingress-api/chirpstack_v3"
-	"ttnmapper-ingress-api/chirpstack_v4"
-	"ttnmapper-ingress-api/helium"
-	"ttnmapper-ingress-api/ttn"
-	"ttnmapper-ingress-api/tts"
-	"ttnmapper-ingress-api/types"
+	"ttnmapper-services/services/ingress-api/chirpstack_v3"
+	"ttnmapper-services/services/ingress-api/chirpstack_v4"
+	"ttnmapper-services/services/ingress-api/helium"
+	"ttnmapper-services/services/ingress-api/ttn"
+	"ttnmapper-services/services/ingress-api/tts"
+	"ttnmapper-services/services/ingress-api/types"
 )
 
 func Routes(publishChannel chan types.TtnMapperUplinkMessage) *chi.Mux {

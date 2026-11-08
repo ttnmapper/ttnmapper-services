@@ -16,7 +16,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 )
 
 func GetCirclesTile(w http.ResponseWriter, r *http.Request) {

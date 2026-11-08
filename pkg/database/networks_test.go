@@ -36,7 +36,11 @@ func TestNetworkQueries(t *testing.T) {
 			if !strings.Contains(query, tc.fragment) || strings.Contains(query, "OR true") {
 				t.Fatalf("query = %s", query)
 			}
-			if !reflect.DeepEqual(args, []interface{}{"network' OR true --"}) {
+			expected := []interface{}{"network' OR true --"}
+			if tc.name == "subscription" {
+				expected = append(expected, 1)
+			}
+			if !reflect.DeepEqual(args, expected) {
 				t.Fatalf("bound args = %#v", args)
 			}
 		})

@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	"ttnmapper-ingress-api/types"
+	"ttnmapper-services/services/ingress-api/types"
 )
 
 func ParsePayloadFields(port int64, payloadFieldsInterface interface{}, packetOut *types.TtnMapperUplinkMessage) error {

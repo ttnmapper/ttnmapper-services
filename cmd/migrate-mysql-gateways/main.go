@@ -98,7 +98,7 @@ func main() {
 
 		err := database.InsertGatewayLocationsBatch(gatewayLocations)
 		if err != nil {
-			log.Fatalf(err.Error())
+			log.Fatal(err)
 		}
 		log.Println("Inserted", offset)
 	}

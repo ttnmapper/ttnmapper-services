@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 	"testing"
-	"ttnmapper-ingress-api/types"
-	"ttnmapper-ingress-api/utils"
+	"ttnmapper-services/services/ingress-api/types"
+	"ttnmapper-services/services/ingress-api/utils"
 
 	chirpstack "github.com/brocaar/chirpstack-api/go/v3/as/integration"
 	"github.com/golang/protobuf/jsonpb"

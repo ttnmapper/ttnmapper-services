@@ -33,12 +33,12 @@ func DatarateToSfBw(datarate string) (spreadingFactor uint8, bandwidth uint64) {
 	drParts := strings.Split(datarate, "BW")
 	bandwidthInt, err := strconv.Atoi(drParts[1])
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err)
 	}
 	bandwidth = uint64(bandwidthInt * 1000) // kHz to Hz
 	sf, err := strconv.Atoi(strings.TrimPrefix(drParts[0], "SF"))
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err)
 	}
 	spreadingFactor = uint8(sf)
 

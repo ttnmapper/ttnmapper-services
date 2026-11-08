@@ -4,7 +4,7 @@ import (
 	"github.com/streadway/amqp"
 	"log"
 	"strconv"
-	"ttn-to-aprs-bridge/utils"
+	"ttnmapper-services/services/ttn-to-aprs-bridge/utils"
 )
 
 type Credentials struct {

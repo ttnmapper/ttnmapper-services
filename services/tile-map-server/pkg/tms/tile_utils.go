@@ -4,7 +4,7 @@ import (
 	"math"
 	"os"
 	"time"
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 )
 
 func GetCacheDurationForZoom(z int) time.Duration {

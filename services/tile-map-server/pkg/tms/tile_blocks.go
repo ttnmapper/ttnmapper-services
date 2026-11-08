@@ -15,7 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 )
 
 func GetBlocksTile(w http.ResponseWriter, r *http.Request) {

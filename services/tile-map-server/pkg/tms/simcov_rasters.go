@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 )
 
 type rasterMetadata struct {

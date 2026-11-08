@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 	"time"
-	"ttnmapper-websockets-live/types"
+	"ttnmapper-services/services/websockets-live/types"
 )
 
 func TestClientFilters(t *testing.T) {

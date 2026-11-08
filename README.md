@@ -3,19 +3,18 @@
 This repository contains all TTN Mapper / CoverageMap Go backend services.
 Make backend changes here on `master`. The original standalone GitHub repositories
 are archived for historical reference; their local checkouts have been removed.
-Existing database workers remain in the root module. Imported
-standalone services retain their own modules and vendored dependencies under
-`services/`, avoiding dependency changes during the deployment migration.
+All services and maintenance commands now belong to one root Go module and share
+one dependency graph and root vendor tree. Service processes remain independent.
 
 The repository is [ttnmapper/ttnmapper-services](https://github.com/ttnmapper/ttnmapper-services).
-The root Go module is named `ttnmapper-services`; standalone service modules
-retain their existing names. Docker service names and executable names are unchanged.
+The root Go module is named `ttnmapper-services`. Docker service names and
+executable names are unchanged.
 
 ## Build and check
 
-Run `scripts/check-go.sh build` to build every module. Set `GO_BIN` to select a Go
+Run `scripts/check-go.sh build` to build every service and tool. Set `GO_BIN` to select a Go
 executable. `compile-tests` compiles test packages without running test cases;
-`test` runs the isolated suite across all six modules with a 60-second timeout
+`test` runs the isolated suite across the root module with a 60-second timeout
 per package. No production credentials, live databases, RabbitMQ or APRS servers
 are required. HTTP fetch tests use in-memory transports; database query tests use
 GORM DryRun with automatic ping disabled. Tile-server tests use temporary files
@@ -27,9 +26,12 @@ or end-to-end delivery. The website authentication test was an empty placeholder
 and was removed without claiming authentication coverage. Add future integration
 tests behind an explicit opt-in and use disposable infrastructure.
 
-Root `go build ./...` and `go test ./...` do not traverse nested Go modules. Use
-the script to cover the entire repository. Each module uses `-mod=vendor` and can
-also be developed independently from its directory.
+Root `go build -mod=vendor ./...` and `go test -mod=vendor ./...` cover the
+entire repository. The minimum Go version is 1.24, matching the tile server's
+existing requirement. The TTN throttled fork and APRS fork remain selected in the
+root `go.mod`. GORM v2/PostgreSQL dependencies now use the tile server's versions;
+the gateway-channel service's GORM v1 remains until its database adapter is migrated.
+Docker build contexts must be the repository root to include this shared module.
 
 ## PostgreSQL integration tests
 
@@ -86,7 +88,7 @@ All Compose Git build contexts use the plain repository URL and therefore build
 from the default-branch head. Root-level Dockerfiles support every service.
 
 Example: `docker build -f Dockerfile.websockets-live -t websockets-live .`.
-The original module-local Dockerfiles also support local subdirectory builds.
+The imported Dockerfiles also require the repository root as their build context.
 
 Imported service images use an empty `conf.default.json` to retain Go defaults
 and environment overrides. Source templates remain available as examples; real

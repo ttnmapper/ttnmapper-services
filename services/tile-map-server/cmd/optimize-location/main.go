@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"ttnmapper-tms/pkg/tms"
+	"ttnmapper-services/services/tile-map-server/pkg/tms"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

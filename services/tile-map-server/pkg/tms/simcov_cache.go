@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 )
 
 // simCovCacheEntry is the on-disk representation of a per-gateway simulation result.

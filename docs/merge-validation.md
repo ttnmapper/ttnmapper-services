@@ -145,3 +145,19 @@ were accompanied by continued processing of valid packets.
 This is recorded operator-supplied evidence, not an independent remote inspection
 or a long-term stability guarantee. The separate production tile-server host is
 unchanged. Retain server rollback images until the operator chooses to retire them.
+
+## Single-module consolidation (8 November 2026)
+
+The six module graphs are consolidated into the root `ttnmapper-services` module.
+All first-party imports use that namespace. The five nested `go.mod`/`go.sum` files
+and vendor trees are removed; one regenerated vendor tree supplies every service.
+The minimum Go version is 1.24, preserving the tile server's existing minimum.
+The TTN throttled and APRS replacements are retained. Shared versions reconcile
+GORM v2 to 1.31.1, PostgreSQL driver to 1.6.0 and Prometheus to 1.23.2, already used
+by the tile server. GORM v1 remains explicitly separate for gateway-channels.
+
+Root-context Dockerfiles received only the changes needed to consume the root
+module. Toolchain pinning, image/release modernization and CI remain deferred.
+The check script now checks the whole repository once. Go 1.24's vet checks exposed
+nonconstant logging format strings, corrected without changing their messages.
+The GORM query test now accounts for the driver's parameterized LIMIT.

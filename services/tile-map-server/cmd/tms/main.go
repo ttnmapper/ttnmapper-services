@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 
-	"ttnmapper-tms/pkg/tms"
+	"ttnmapper-services/services/tile-map-server/pkg/tms"
 )
 
 /*

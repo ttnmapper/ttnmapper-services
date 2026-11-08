@@ -6,7 +6,7 @@ package main
 
 import (
 	"encoding/json"
-	"ttnmapper-websockets-live/types"
+	"ttnmapper-services/services/websockets-live/types"
 )
 
 // Hub owns client registration and delivers packets matching all supplied filters.

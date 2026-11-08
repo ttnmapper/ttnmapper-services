@@ -1,7 +1,7 @@
 package types
 
 import (
-	"ttnmapper-ingress-api/ttn/ttn_types"
+	"ttnmapper-services/services/ingress-api/ttn/ttn_types"
 )
 
 type TtnMapperAndroidMessageV3 struct {

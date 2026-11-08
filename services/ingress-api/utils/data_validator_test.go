@@ -2,7 +2,7 @@ package utils
 
 import (
 	"testing"
-	"ttnmapper-ingress-api/types"
+	"ttnmapper-services/services/ingress-api/types"
 )
 
 func TestSanitizeFrequency(t *testing.T) {

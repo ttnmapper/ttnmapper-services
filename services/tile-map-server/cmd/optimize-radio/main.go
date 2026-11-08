@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
-	"ttnmapper-tms/pkg/tms"
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"

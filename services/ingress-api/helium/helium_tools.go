@@ -3,8 +3,8 @@ package helium
 import (
 	"strconv"
 	"strings"
-	"ttnmapper-ingress-api/types"
-	"ttnmapper-ingress-api/utils"
+	"ttnmapper-services/services/ingress-api/types"
+	"ttnmapper-services/services/ingress-api/utils"
 )
 
 func CopyHeliumFields(packetIn UplinkMessage, packetOut *types.TtnMapperUplinkMessage) {

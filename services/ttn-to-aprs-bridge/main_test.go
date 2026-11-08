@@ -7,8 +7,8 @@ import (
 	"github.com/streadway/amqp"
 	"testing"
 	"time"
-	"ttn-to-aprs-bridge/sqldb"
-	"ttn-to-aprs-bridge/types"
+	"ttnmapper-services/services/ttn-to-aprs-bridge/sqldb"
+	"ttnmapper-services/services/ttn-to-aprs-bridge/types"
 )
 
 func TestReportInterval(t *testing.T) {

@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-	"ttnmapper-gateway-channels/types"
+	"ttnmapper-services/services/gateway-channels/types"
 )
 
 func TestProcessPackets(t *testing.T) {

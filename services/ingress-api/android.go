@@ -11,10 +11,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	"ttnmapper-ingress-api/ttn"
-	types2 "ttnmapper-ingress-api/ttn/ttn_types"
-	"ttnmapper-ingress-api/types"
-	"ttnmapper-ingress-api/utils"
+	"ttnmapper-services/services/ingress-api/ttn"
+	types2 "ttnmapper-services/services/ingress-api/ttn/ttn_types"
+	"ttnmapper-services/services/ingress-api/types"
+	"ttnmapper-services/services/ingress-api/utils"
 )
 
 func AndroidRoutes() *chi.Mux {

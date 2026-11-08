@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 
 	"golang.org/x/image/tiff"
 )

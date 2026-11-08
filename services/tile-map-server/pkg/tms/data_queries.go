@@ -3,7 +3,7 @@ package tms
 import (
 	"strconv"
 	"time"
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 
 	"github.com/patrickmn/go-cache"
 )

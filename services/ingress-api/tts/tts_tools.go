@@ -7,8 +7,8 @@ import (
 	"go.thethings.network/lorawan-stack/v3/pkg/ttnpb"
 	"strings"
 	"time"
-	"ttnmapper-ingress-api/types"
-	"ttnmapper-ingress-api/utils"
+	"ttnmapper-services/services/ingress-api/types"
+	"ttnmapper-services/services/ingress-api/utils"
 )
 
 func DecodeV3Payload(port int64, packetIn ttnpb.ApplicationUp, packetOut *types.TtnMapperUplinkMessage) error {

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 )
 
 func TestGatewayWithinRadiusOfTile(t *testing.T) {

@@ -4,9 +4,9 @@ import (
 	"strconv"
 	"strings"
 	"time"
-	types2 "ttnmapper-ingress-api/ttn/ttn_types"
-	"ttnmapper-ingress-api/types"
-	"ttnmapper-ingress-api/utils"
+	types2 "ttnmapper-services/services/ingress-api/ttn/ttn_types"
+	"ttnmapper-services/services/ingress-api/types"
+	"ttnmapper-services/services/ingress-api/utils"
 )
 
 func CopyTtnV2Fields(packetIn types2.UplinkMessage, packetOut *types.TtnMapperUplinkMessage) {

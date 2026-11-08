@@ -3,7 +3,7 @@ package tts
 import (
 	"github.com/go-chi/chi"
 	_ "time"
-	"ttnmapper-ingress-api/types"
+	"ttnmapper-services/services/ingress-api/types"
 )
 
 type Context struct {

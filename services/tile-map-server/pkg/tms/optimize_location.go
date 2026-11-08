@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
-	"ttnmapper-tms/pkg/tms/types"
+	"ttnmapper-services/services/tile-map-server/pkg/tms/types"
 )
 
 // RunLocationOptimization performs location optimization for a gateway using

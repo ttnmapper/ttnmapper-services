@@ -6,7 +6,7 @@ import (
 	"github.com/streadway/amqp"
 	"log"
 	"time"
-	"ttnmapper-gateway-channels/types"
+	"ttnmapper-services/services/gateway-channels/types"
 )
 
 func processRawPackets() {

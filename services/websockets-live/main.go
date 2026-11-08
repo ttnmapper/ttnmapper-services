@@ -8,7 +8,7 @@ import (
 	"github.com/tkanos/gonfig"
 	"log"
 	"net/http"
-	"ttnmapper-websockets-live/types"
+	"ttnmapper-services/services/websockets-live/types"
 )
 
 var messageChannel = make(chan types.TtnMapperUplinkMessage)

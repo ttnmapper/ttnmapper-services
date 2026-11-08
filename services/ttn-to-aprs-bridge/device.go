@@ -3,7 +3,7 @@ package main
 import (
 	"sync"
 	"time"
-	"ttn-to-aprs-bridge/types"
+	"ttnmapper-services/services/ttn-to-aprs-bridge/types"
 )
 
 var minimumInterval = 30*time.Second
