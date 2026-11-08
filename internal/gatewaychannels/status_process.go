@@ -8,6 +8,7 @@ import (
 	"time"
 	"ttnmapper-services/internal/gatewaychannels/types"
 	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/utils"
 )
 
 func processRawPackets() {
@@ -46,7 +47,7 @@ func updateGateway(message types.TtnMapperUplinkMessage, gateway types.TtnMapper
 	processedGateways.Inc()
 
 	if err := associateGateway(message, gateway, gatewayStore{getAntennaDb, getFrequencyDb, setAntennaFrequencyDb}); err != nil {
-		failOnError(err, "Can't update antenna frequency in DB")
+		utils.FailOnError(err, "Can't update antenna frequency in DB")
 	}
 
 	// Prometheus stats

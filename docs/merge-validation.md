@@ -194,3 +194,14 @@ service-specific query/cache code and aliases the common APRS model.
 Connection tests verify quoting and application-name limits. The disposable
 PostgreSQL suite passes with shared models, including frequency upsert/counting
 and propagation of write failures. No deployed schema or server was changed.
+
+## Shared configuration and utilities
+
+`pkg/config` replaces the three configuration-loading implementations. Root workers
+and maintenance commands remain environment-only; imported services layer defaults,
+optional JSON/YAML, then tagged environment values. Existing environment key spellings
+are retained. A missing imported-service configuration file now still permits
+environment overrides; malformed files/typed values return errors. Tests cover
+precedence, port/bool parsing, missing files, invalid values and legacy key spelling.
+The gonfig/envconfig dependencies are removed. Equivalent formatting/fatal-error
+utilities use `pkg/utils`; ingress-specific validation thresholds remain local.

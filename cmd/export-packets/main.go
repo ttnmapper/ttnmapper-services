@@ -10,19 +10,19 @@ import (
 	"slices"
 
 	"github.com/artyom/csvstruct"
-	"github.com/kelseyhightower/envconfig"
+	"ttnmapper-services/pkg/config"
 
 	"ttnmapper-services/pkg/database"
 )
 
 type Configuration struct {
-	PostgresHost          string `envconfig:"POSTGRES_HOST"`
-	PostgresPort          string `envconfig:"POSTGRES_PORT"`
-	PostgresUser          string `envconfig:"POSTGRES_USER"`
-	PostgresPassword      string `envconfig:"POSTGRES_PASSWORD"`
-	PostgresDatabase      string `envconfig:"POSTGRES_DATABASE"`
-	PostgresDebugLog      bool   `envconfig:"POSTGRES_DEBUG_LOG"`
-	PostgresInsertThreads int    `envconfig:"POSTGRES_INSERT_THREADS"`
+	PostgresHost          string `env:"POSTGRES_HOST"`
+	PostgresPort          string `env:"POSTGRES_PORT"`
+	PostgresUser          string `env:"POSTGRES_USER"`
+	PostgresPassword      string `env:"POSTGRES_PASSWORD"`
+	PostgresDatabase      string `env:"POSTGRES_DATABASE"`
+	PostgresDebugLog      bool   `env:"POSTGRES_DEBUG_LOG"`
+	PostgresInsertThreads int    `env:"POSTGRES_INSERT_THREADS"`
 }
 
 var myConfiguration = Configuration{
@@ -44,7 +44,7 @@ type DataBbox struct {
 
 func main() {
 
-	err := envconfig.Process("", &myConfiguration)
+	err := config.Environment(&myConfiguration)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

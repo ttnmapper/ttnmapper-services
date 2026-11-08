@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 	"ttnmapper-services/internal/ingressapi/types"
-	"ttnmapper-services/internal/ingressapi/utils"
+	sharedutil "ttnmapper-services/pkg/utils"
 
 	chirpstack "github.com/brocaar/chirpstack-api/go/v3/as/integration"
 	"github.com/golang/protobuf/jsonpb"
@@ -45,8 +45,8 @@ func TestChirpV3(t *testing.T) {
 	CopyChirpV3Fields(packetIn, &packetOut)
 	gw := packetOut.Gateways[0]
 
-	log.Println(utils.PrettyPrint(packetIn))
-	log.Println(utils.PrettyPrint(packetOut))
+	log.Println(sharedutil.PrettyPrint(packetIn))
+	log.Println(sharedutil.PrettyPrint(packetOut))
 
 	gatewayCheck := gw.Latitude == 52.445313166666665 && gw.Longitude == 10.8140175 &&
 		gw.Altitude == 100 && gw.LocationSource == "UNKNOWN" && gw.LocationAccuracy == 0

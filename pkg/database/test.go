@@ -1,17 +1,17 @@
 package database
 
 import (
-	"github.com/kelseyhightower/envconfig"
 	"log"
+	"ttnmapper-services/pkg/config"
 )
 
 type Configuration struct {
-	PostgresHost     string `envconfig:"POSTGRES_HOST"`
-	PostgresPort     string `envconfig:"POSTGRES_PORT"`
-	PostgresUser     string `envconfig:"POSTGRES_USER"`
-	PostgresPassword string `envconfig:"POSTGRES_PASSWORD"`
-	PostgresDatabase string `envconfig:"POSTGRES_DATABASE"`
-	PostgresDebugLog bool   `envconfig:"POSTGRES_DEBUG_LOG"`
+	PostgresHost     string `env:"POSTGRES_HOST"`
+	PostgresPort     string `env:"POSTGRES_PORT"`
+	PostgresUser     string `env:"POSTGRES_USER"`
+	PostgresPassword string `env:"POSTGRES_PASSWORD"`
+	PostgresDatabase string `env:"POSTGRES_DATABASE"`
+	PostgresDebugLog bool   `env:"POSTGRES_DEBUG_LOG"`
 }
 
 var myConfiguration = Configuration{
@@ -24,7 +24,7 @@ var myConfiguration = Configuration{
 }
 
 func initDb() {
-	err := envconfig.Process("", &myConfiguration)
+	err := config.Environment(&myConfiguration)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

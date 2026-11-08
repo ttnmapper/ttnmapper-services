@@ -5,13 +5,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/streadway/amqp"
-	"github.com/tkanos/gonfig"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"sync"
 	"ttnmapper-services/internal/gatewaychannels/types"
+	"ttnmapper-services/pkg/config"
 	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/utils"
 )
 
 type Configuration struct {
@@ -72,12 +73,12 @@ var (
 
 func Run() {
 
-	err := gonfig.GetConf("conf.json", &myConfiguration)
+	err := config.Load("conf.json", &myConfiguration)
 	if err != nil {
 		log.Println(err)
 	}
 
-	log.Printf("[Configuration]\n%s\n", prettyPrint(myConfiguration)) // output: [UserA, UserB]
+	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {

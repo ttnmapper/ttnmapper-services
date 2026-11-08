@@ -8,25 +8,25 @@ import (
 	"ttnmapper-services/pkg/types"
 	"ttnmapper-services/pkg/utils"
 
-	"github.com/kelseyhightower/envconfig"
+	"ttnmapper-services/pkg/config"
 )
 
 type Configuration struct {
-	MysqlHost     string `envconfig:"MYSQL_HOST"`
-	MysqlPort     string `envconfig:"MYSQL_PORT"`
-	MysqlUser     string `envconfig:"MYSQL_USER"`
-	MysqlPassword string `envconfig:"MYSQL_PASSWORD"`
-	MysqlDatabase string `envconfig:"MYSQL_DATABASE"`
-	MysqlDebugLog bool   `envconfig:"MYSQL_DEBUG_LOG"`
+	MysqlHost     string `env:"MYSQL_HOST"`
+	MysqlPort     string `env:"MYSQL_PORT"`
+	MysqlUser     string `env:"MYSQL_USER"`
+	MysqlPassword string `env:"MYSQL_PASSWORD"`
+	MysqlDatabase string `env:"MYSQL_DATABASE"`
+	MysqlDebugLog bool   `env:"MYSQL_DEBUG_LOG"`
 
-	PostgresHost     string `envconfig:"POSTGRES_HOST"`
-	PostgresPort     string `envconfig:"POSTGRES_PORT"`
-	PostgresUser     string `envconfig:"POSTGRES_USER"`
-	PostgresPassword string `envconfig:"POSTGRES_PASSWORD"`
-	PostgresDatabase string `envconfig:"POSTGRES_DATABASE"`
-	PostgresDebugLog bool   `envconfig:"POSTGRES_DEBUG_LOG"`
+	PostgresHost     string `env:"POSTGRES_HOST"`
+	PostgresPort     string `env:"POSTGRES_PORT"`
+	PostgresUser     string `env:"POSTGRES_USER"`
+	PostgresPassword string `env:"POSTGRES_PASSWORD"`
+	PostgresDatabase string `env:"POSTGRES_DATABASE"`
+	PostgresDebugLog bool   `env:"POSTGRES_DEBUG_LOG"`
 
-	PrometheusPort string `envconfig:"PROMETHEUS_PORT"`
+	PrometheusPort string `env:"PROMETHEUS_PORT"`
 }
 
 var myConfiguration = Configuration{
@@ -48,7 +48,7 @@ var myConfiguration = Configuration{
 }
 
 func main() {
-	err := envconfig.Process("", &myConfiguration)
+	err := config.Environment(&myConfiguration)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

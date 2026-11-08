@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 	"ttnmapper-services/internal/ingressapi/types"
-	"ttnmapper-services/internal/ingressapi/utils"
+	sharedutil "ttnmapper-services/pkg/utils"
 )
 
 func TestHandlerJson(t *testing.T) {
@@ -60,7 +60,7 @@ func TestHandlerJson(t *testing.T) {
 		select {
 		case packetOut, ok := <-publishChannel:
 			if ok {
-				log.Println(utils.PrettyPrint(packetOut))
+				log.Println(sharedutil.PrettyPrint(packetOut))
 			} else {
 				t.Error("Channel closed!")
 			}

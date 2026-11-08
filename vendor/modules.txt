@@ -170,9 +170,6 @@ github.com/json-iterator/go
 # github.com/kellydunn/golang-geo v0.7.0
 ## explicit
 github.com/kellydunn/golang-geo
-# github.com/kelseyhightower/envconfig v1.4.0
-## explicit
-github.com/kelseyhightower/envconfig
 # github.com/kylelemons/go-gypsy v1.0.0
 ## explicit; go 1.5
 github.com/kylelemons/go-gypsy/yaml
@@ -262,9 +259,6 @@ github.com/spf13/pflag
 # github.com/streadway/amqp v1.0.0
 ## explicit; go 1.10
 github.com/streadway/amqp
-# github.com/tkanos/gonfig v0.0.0-20210106201359-53e13348de2f
-## explicit
-github.com/tkanos/gonfig
 # github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6
 ## explicit; go 1.14
 github.com/ulule/deepcopier

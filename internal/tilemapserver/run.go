@@ -13,6 +13,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"strconv"
 	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/utils"
 )
 
 /*
@@ -40,7 +41,7 @@ func Run() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	log.Printf("[Configuration]\n%s\n", PrettyPrint(MyConfiguration)) // output: [UserA, UserB]
+	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(MyConfiguration)) // output: [UserA, UserB]
 
 	DB, err = database.OpenPostgres(database.PostgresOptions{Host: MyConfiguration.PostgresHost, Port: strconv.Itoa(MyConfiguration.PostgresPort), User: MyConfiguration.PostgresUser, Password: MyConfiguration.PostgresPassword, Database: MyConfiguration.PostgresDatabase, DebugLog: MyConfiguration.PostgresDebugLog})
 

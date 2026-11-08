@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"ttnmapper-services/internal/ingressapi/types"
 	"ttnmapper-services/internal/ingressapi/utils"
+	sharedutil "ttnmapper-services/pkg/utils"
 )
 
 func (handlerContext *Context) PostHelium(w http.ResponseWriter, r *http.Request) {
@@ -50,7 +51,7 @@ func (handlerContext *Context) PostHelium(w http.ResponseWriter, r *http.Request
 		log.Println(string(body))
 		return
 	}
-	log.Println(utils.PrettyPrint(packetIn))
+	log.Println(sharedutil.PrettyPrint(packetIn))
 
 	var packetOut types.TtnMapperUplinkMessage
 

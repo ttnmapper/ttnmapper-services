@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
-	"github.com/tkanos/gonfig"
 	"log"
 	"net/http"
 	"ttnmapper-services/internal/ingressapi/types"
-	"ttnmapper-services/internal/ingressapi/utils"
+	"ttnmapper-services/pkg/config"
+	sharedutil "ttnmapper-services/pkg/utils"
 )
 import "github.com/go-chi/chi"
 
@@ -34,12 +34,12 @@ var myConfiguration = Configuration{
 
 func Run() {
 
-	err := gonfig.GetConf("conf.json", &myConfiguration)
+	err := config.Load("conf.json", &myConfiguration)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
+	log.Printf("[Configuration]\n%s\n", sharedutil.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
 
 	router := Routes(publishChannel)
 
@@ -65,11 +65,11 @@ func publishFromChannel() {
 	//	log.Print("Error connecting to RabbitMQ")
 	//	return
 	//}
-	utils.FailOnError(err, "Failed to connect to RabbitMQ")
+	sharedutil.FailOnError(err, "Failed to connect to RabbitMQ")
 	defer conn.Close()
 
 	ch, err := conn.Channel()
-	utils.FailOnError(err, "Failed to open a channel")
+	sharedutil.FailOnError(err, "Failed to open a channel")
 	defer ch.Close()
 
 	err = ch.ExchangeDeclare(
@@ -103,6 +103,6 @@ func publishFromChannel() {
 				ContentType:  "text/plain",
 				Body:         []byte(data),
 			})
-		utils.FailOnError(err, "Failed to publish a message")
+		sharedutil.FailOnError(err, "Failed to publish a message")
 	}
 }

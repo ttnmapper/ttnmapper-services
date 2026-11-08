@@ -6,13 +6,13 @@ import (
 	"github.com/ebarkie/aprs"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/streadway/amqp"
-	"github.com/tkanos/gonfig"
 	"log"
 	"net/http"
 	"ttnmapper-services/internal/aprsbridge/rabbit"
 	"ttnmapper-services/internal/aprsbridge/sqldb"
 	"ttnmapper-services/internal/aprsbridge/types"
-	"ttnmapper-services/internal/aprsbridge/utils"
+	"ttnmapper-services/pkg/config"
+	"ttnmapper-services/pkg/utils"
 )
 
 type Configuration struct {
@@ -65,7 +65,7 @@ var myConfiguration = Configuration{
 
 func Run() {
 
-	err := gonfig.GetConf("conf.json", &myConfiguration)
+	err := config.Load("conf.json", &myConfiguration)
 	if err != nil {
 		log.Println(err)
 	}

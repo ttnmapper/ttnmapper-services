@@ -3,20 +3,21 @@ package gatewaychannels
 import (
 	"github.com/streadway/amqp"
 	"log"
+	"ttnmapper-services/pkg/utils"
 )
 
 func subscribeToRabbitRaw() {
 	// Start thread that listens for new amqp messages
 	go func() {
 		conn, err := amqp.Dial("amqp://" + myConfiguration.AmqpUser + ":" + myConfiguration.AmqpPassword + "@" + myConfiguration.AmqpHost + ":" + myConfiguration.AmqpPort + "/")
-		failOnError(err, "Failed to connect to RabbitMQ")
+		utils.FailOnError(err, "Failed to connect to RabbitMQ")
 		defer conn.Close()
 
 		// Create a channel for errors
 		notify := conn.NotifyClose(make(chan *amqp.Error)) //error channel
 
 		ch, err := conn.Channel()
-		failOnError(err, "Failed to open a channel")
+		utils.FailOnError(err, "Failed to open a channel")
 		defer ch.Close()
 
 		err = ch.ExchangeDeclare(
@@ -28,7 +29,7 @@ func subscribeToRabbitRaw() {
 			false,                                    // no-wait
 			nil,                                      // arguments
 		)
-		failOnError(err, "Failed to declare an exchange")
+		utils.FailOnError(err, "Failed to declare an exchange")
 
 		q, err := ch.QueueDeclare(
 			myConfiguration.AmqpQueueInsertedData, // name
@@ -38,14 +39,14 @@ func subscribeToRabbitRaw() {
 			false,                                 // no-wait
 			nil,                                   // arguments
 		)
-		failOnError(err, "Failed to declare a queue")
+		utils.FailOnError(err, "Failed to declare a queue")
 
 		err = ch.Qos(
 			10,    // prefetch count
 			0,     // prefetch size
 			false, // global
 		)
-		failOnError(err, "Failed to set queue QoS")
+		utils.FailOnError(err, "Failed to set queue QoS")
 
 		err = ch.QueueBind(
 			q.Name,                                   // queue name
@@ -53,7 +54,7 @@ func subscribeToRabbitRaw() {
 			myConfiguration.AmqpExchangeInsertedData, // exchange
 			false,
 			nil)
-		failOnError(err, "Failed to bind a queue")
+		utils.FailOnError(err, "Failed to bind a queue")
 
 		msgs, err := ch.Consume(
 			q.Name, // queue
@@ -64,7 +65,7 @@ func subscribeToRabbitRaw() {
 			false,  // no-wait
 			nil,    // args
 		)
-		failOnError(err, "Failed to register a consumer")
+		utils.FailOnError(err, "Failed to register a consumer")
 
 		log.Println("AMQP started")
 

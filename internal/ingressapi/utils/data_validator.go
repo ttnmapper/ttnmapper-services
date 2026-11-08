@@ -4,40 +4,41 @@ import (
 	"errors"
 	"math"
 	"ttnmapper-services/internal/ingressapi/types"
+	sharedutil "ttnmapper-services/pkg/utils"
 )
 
 func CheckData(packet types.TtnMapperUplinkMessage) error {
 
 	// Accuracy too low when satellites less than 4
-	if !IsZeroOfUnderlyingType(packet.Satellites) {
+	if !sharedutil.IsZeroOfUnderlyingType(packet.Satellites) {
 		if packet.Satellites < 4 {
 			return errors.New("less than 4 satellites")
 		}
 	}
 
 	// Accuracy value must be below 10 metre
-	if !IsZeroOfUnderlyingType(packet.AccuracyMeters) {
+	if !sharedutil.IsZeroOfUnderlyingType(packet.AccuracyMeters) {
 		if packet.AccuracyMeters > 15 {
 			return errors.New("accuracy too low")
 		}
 	}
 
 	// HDOP must be lower than 5
-	if !IsZeroOfUnderlyingType(packet.Hdop) {
+	if !sharedutil.IsZeroOfUnderlyingType(packet.Hdop) {
 		if packet.Hdop > 5 {
 			return errors.New("hdop is too high")
 		}
 	}
 
 	// Too high satellite count indicates corruption
-	//if !IsZeroOfUnderlyingType(packet.Satellites) {
+	//if !sharedutil.IsZeroOfUnderlyingType(packet.Satellites) {
 	//	if packet.Satellites > 100 {
 	//		return errors.New("satellite count too high")
 	//	}
 	//}
 
 	// Latitude - with a small buffer around the pole, as there are a lot of invalid points there
-	if IsZeroOfUnderlyingType(packet.Latitude) {
+	if sharedutil.IsZeroOfUnderlyingType(packet.Latitude) {
 		return errors.New("latitude not set")
 	}
 	if packet.Latitude >= 89 || packet.Latitude <= -89 {
@@ -45,7 +46,7 @@ func CheckData(packet types.TtnMapperUplinkMessage) error {
 	}
 
 	// Longitude
-	if IsZeroOfUnderlyingType(packet.Longitude) {
+	if sharedutil.IsZeroOfUnderlyingType(packet.Longitude) {
 		return errors.New("longitude not set")
 	}
 	if packet.Longitude >= 180 || packet.Longitude <= -180 {
@@ -84,7 +85,7 @@ func CheckData(packet types.TtnMapperUplinkMessage) error {
 
 func SanitizeData(packet *types.TtnMapperUplinkMessage) {
 	// clamp altitude to ground if not set
-	if IsZeroOfUnderlyingType(packet.Altitude) {
+	if sharedutil.IsZeroOfUnderlyingType(packet.Altitude) {
 		packet.Altitude = 0
 	}
 

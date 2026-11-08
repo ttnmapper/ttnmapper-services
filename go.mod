@@ -19,6 +19,7 @@ require (
 	github.com/fogleman/gg v1.3.0
 	github.com/form3tech-oss/jwt-go v3.2.5+incompatible
 	github.com/getkin/kin-openapi v0.131.0
+	github.com/ghodss/yaml v1.0.0
 	github.com/go-chi/chi v3.3.3+incompatible
 	github.com/go-chi/chi/v5 v5.2.4
 	github.com/go-chi/cors v1.2.0
@@ -29,7 +30,6 @@ require (
 	github.com/j4/gosm v0.0.0-20141123101329-8f3e37d8629e
 	github.com/jackc/pgx/v5 v5.8.0
 	github.com/kellydunn/golang-geo v0.7.0
-	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo/v4 v4.6.1
 	github.com/ormembaar/angry-purple-tiger v0.1.0
 	github.com/patrickmn/go-cache v2.1.0+incompatible
@@ -37,7 +37,6 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.23.2
 	github.com/streadway/amqp v1.0.0
-	github.com/tkanos/gonfig v0.0.0-20210106201359-53e13348de2f
 	github.com/ulule/deepcopier v0.0.0-20200430083143-45decc6639b6
 	github.com/umahmood/haversine v0.0.0-20151105152445-808ab04add26
 	go.packetbroker.org/api/routing v1.8.18
@@ -62,7 +61,6 @@ require (
 	github.com/ebarkie/weatherlink v1.0.2 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.0.2 // indirect
 	github.com/erikstmartin/go-testdb v0.0.0-20160219214506-8d10e4a1bae5 // indirect
-	github.com/ghodss/yaml v1.0.0 // indirect
 	github.com/go-openapi/jsonpointer v0.21.0 // indirect
 	github.com/go-openapi/swag v0.23.0 // indirect
 	github.com/go-sql-driver/mysql v1.6.0 // indirect

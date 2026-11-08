@@ -15,6 +15,7 @@ import (
 	types2 "ttnmapper-services/internal/ingressapi/ttn/ttn_types"
 	"ttnmapper-services/internal/ingressapi/types"
 	"ttnmapper-services/internal/ingressapi/utils"
+	sharedutil "ttnmapper-services/pkg/utils"
 )
 
 func AndroidRoutes() *chi.Mux {
@@ -150,7 +151,7 @@ func PostAndroidV4(w http.ResponseWriter, r *http.Request) {
 	// Make sure frequency is sanitized
 	receivedPacket.Frequency = utils.SanitizeFrequency(float64(receivedPacket.Frequency))
 
-	log.Println(utils.PrettyPrint(receivedPacket))
+	log.Println(sharedutil.PrettyPrint(receivedPacket))
 
 	publishChannel <- receivedPacket
 	response["success"] = true

@@ -8,51 +8,51 @@ import (
 	"ttnmapper-services/pkg/database"
 	"ttnmapper-services/pkg/utils"
 
-	"github.com/kelseyhightower/envconfig"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/streadway/amqp"
+	"ttnmapper-services/pkg/config"
 )
 
 type Configuration struct {
-	AmqpHost                 string `envconfig:"AMQP_HOST"`
-	AmqpPort                 string `envconfig:"AMQP_PORT"`
-	AmqpUser                 string `envconfig:"AMQP_USER"`
-	AmqpPassword             string `envconfig:"AMQP_PASSWORD"`
-	AmqpExchangeRawPackets   string `envconfig:"AMQP_EXHANGE_RAW"`
-	AmqpQueueRawPackets      string `envconfig:"AMQP_QUEUE"`
-	AmqpExchangeGatewayMoved string `envconfig:"AMQP_EXCHANGE_GATEWAY_MOVED"`
+	AmqpHost                 string `env:"AMQP_HOST"`
+	AmqpPort                 string `env:"AMQP_PORT"`
+	AmqpUser                 string `env:"AMQP_USER"`
+	AmqpPassword             string `env:"AMQP_PASSWORD"`
+	AmqpExchangeRawPackets   string `env:"AMQP_EXHANGE_RAW"`
+	AmqpQueueRawPackets      string `env:"AMQP_QUEUE"`
+	AmqpExchangeGatewayMoved string `env:"AMQP_EXCHANGE_GATEWAY_MOVED"`
 
-	PostgresHost     string `envconfig:"POSTGRES_HOST"`
-	PostgresPort     string `envconfig:"POSTGRES_PORT"`
-	PostgresUser     string `envconfig:"POSTGRES_USER"`
-	PostgresPassword string `envconfig:"POSTGRES_PASSWORD"`
-	PostgresDatabase string `envconfig:"POSTGRES_DATABASE"`
-	PostgresDebugLog bool   `envconfig:"POSTGRES_DEBUG_LOG"`
+	PostgresHost     string `env:"POSTGRES_HOST"`
+	PostgresPort     string `env:"POSTGRES_PORT"`
+	PostgresUser     string `env:"POSTGRES_USER"`
+	PostgresPassword string `env:"POSTGRES_PASSWORD"`
+	PostgresDatabase string `env:"POSTGRES_DATABASE"`
+	PostgresDebugLog bool   `env:"POSTGRES_DEBUG_LOG"`
 
-	PrometheusPort string `envconfig:"PROMETHEUS_PORT"`
+	PrometheusPort string `env:"PROMETHEUS_PORT"`
 
-	FetchAmqp bool `envconfig:"FETCH_AMQP"` // Should we subscribe to the amqp queue to process live data
+	FetchAmqp bool `env:"FETCH_AMQP"` // Should we subscribe to the amqp queue to process live data
 	//FetchNoc          bool `env:"FETCH_NOC"`  // Should we periodically fetch gateway statuses from the NOC (TTNv2)
 
-	FetchWeb         bool `envconfig:"FETCH_WEB"`          // Should we periodically fetch gateway statuses from the TTN website (TTNv2 and v3)
-	FetchWebInterval int  `envconfig:"FETCH_WEB_INTERVAL"` // How often in seconds should we fetch gateway statuses from the TTN Website
+	FetchWeb         bool `env:"FETCH_WEB"`          // Should we periodically fetch gateway statuses from the TTN website (TTNv2 and v3)
+	FetchWebInterval int  `env:"FETCH_WEB_INTERVAL"` // How often in seconds should we fetch gateway statuses from the TTN Website
 
-	FetchPacketBroker         bool `envconfig:"FETCH_PACKET_BROKER"`
-	FetchPacketBrokerInterval int  `envconfig:"FETCH_PACKET_BROKER_INTERVAL"`
+	FetchPacketBroker         bool `env:"FETCH_PACKET_BROKER"`
+	FetchPacketBrokerInterval int  `env:"FETCH_PACKET_BROKER_INTERVAL"`
 
-	FetchRouting         bool `envconfig:"FETCH_ROUTING"`
-	FetchRoutingInterval int  `envconfig:"FETCH_ROUTING_INTERVAL"`
+	FetchRouting         bool `env:"FETCH_ROUTING"`
+	FetchRoutingInterval int  `env:"FETCH_ROUTING_INTERVAL"`
 
-	FetchHelium         bool `envconfig:"FETCH_HELIUM"`
-	FetchHeliumInterval int  `envconfig:"FETCH_HELIUM_INTERVAL"`
+	FetchHelium         bool `env:"FETCH_HELIUM"`
+	FetchHeliumInterval int  `env:"FETCH_HELIUM_INTERVAL"`
 
-	FetchHeliumSnapshot         bool `envconfig:"FETCH_HELIUM_SNAPSHOT"`
-	FetchHeliumSnapshotInterval int  `envconfig:"FETCH_HELIUM_SNAPSHOT_INTERVAL"`
+	FetchHeliumSnapshot         bool `env:"FETCH_HELIUM_SNAPSHOT"`
+	FetchHeliumSnapshotInterval int  `env:"FETCH_HELIUM_SNAPSHOT_INTERVAL"`
 
-	FetchTts         bool `envconfig:"FETCH_TTS"`
-	FetchTtsInterval int  `envconfig:"FETCH_TTS_INTERVAL"`
+	FetchTts         bool `env:"FETCH_TTS"`
+	FetchTtsInterval int  `env:"FETCH_TTS_INTERVAL"`
 }
 
 var myConfiguration = Configuration{
@@ -128,7 +128,7 @@ func Run() {
 	flag.Parse()
 	reprocessApis := flag.Args()
 
-	err := envconfig.Process("", &myConfiguration)
+	err := config.Environment(&myConfiguration)
 	if err != nil {
 		log.Fatal(err.Error())
 	}

@@ -100,7 +100,7 @@ func (handlerContext *Context) up(w http.ResponseWriter, r *http.Request, body [
 
 	// Push this new packet into the stack
 	handlerContext.PublishChannel <- packetOut
-	//log.Println(utils.PrettyPrint(packetOut))
+	//log.Println(sharedutil.PrettyPrint(packetOut))
 
 	return nil
 }

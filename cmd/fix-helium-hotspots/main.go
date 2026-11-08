@@ -4,8 +4,8 @@ import (
 	"log"
 	"ttnmapper-services/pkg/database"
 
-	"github.com/kelseyhightower/envconfig"
 	apt "github.com/ormembaar/angry-purple-tiger"
+	"ttnmapper-services/pkg/config"
 )
 
 /*
@@ -13,14 +13,14 @@ Migration ran 2022-01-08 18:30 SAST
 */
 
 type Configuration struct {
-	PostgresHost     string `envconfig:"POSTGRES_HOST"`
-	PostgresPort     string `envconfig:"POSTGRES_PORT"`
-	PostgresUser     string `envconfig:"POSTGRES_USER"`
-	PostgresPassword string `envconfig:"POSTGRES_PASSWORD"`
-	PostgresDatabase string `envconfig:"POSTGRES_DATABASE"`
-	PostgresDebugLog bool   `envconfig:"POSTGRES_DEBUG_LOG"`
+	PostgresHost     string `env:"POSTGRES_HOST"`
+	PostgresPort     string `env:"POSTGRES_PORT"`
+	PostgresUser     string `env:"POSTGRES_USER"`
+	PostgresPassword string `env:"POSTGRES_PASSWORD"`
+	PostgresDatabase string `env:"POSTGRES_DATABASE"`
+	PostgresDebugLog bool   `env:"POSTGRES_DEBUG_LOG"`
 
-	PrometheusPort string `envconfig:"PROMETHEUS_PORT"`
+	PrometheusPort string `env:"PROMETHEUS_PORT"`
 }
 
 var myConfiguration = Configuration{
@@ -36,7 +36,7 @@ var myConfiguration = Configuration{
 }
 
 func main() {
-	err := envconfig.Process("", &myConfiguration)
+	err := config.Environment(&myConfiguration)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
