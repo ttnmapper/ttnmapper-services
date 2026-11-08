@@ -1,17 +1,17 @@
 package gatewaychannels
 
 import (
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/streadway/amqp"
 	"github.com/tkanos/gonfig"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"sync"
 	"ttnmapper-services/internal/gatewaychannels/types"
+	"ttnmapper-services/pkg/database"
 )
 
 type Configuration struct {
@@ -87,24 +87,16 @@ func Run() {
 		}
 	}()
 
-	// Table name prefixes
-	gorm.DefaultTableNameHandler = func(db *gorm.DB, defaultTableName string) string {
-		//return "ttnmapper_" + defaultTableName
-		return defaultTableName
-	}
-
 	var dbErr error
-	// pq: unsupported sslmode "prefer"; only "require" (default), "verify-full", "verify-ca", and "disable" supported - so we disable it
-	db, dbErr = gorm.Open("postgres", "host="+myConfiguration.PostgresHost+" port="+myConfiguration.PostgresPort+" user="+myConfiguration.PostgresUser+" dbname="+myConfiguration.PostgresDatabase+" password="+myConfiguration.PostgresPassword+" sslmode=disable")
+	db, dbErr = database.OpenPostgres(database.PostgresOptions{Host: myConfiguration.PostgresHost, Port: myConfiguration.PostgresPort, User: myConfiguration.PostgresUser, Password: myConfiguration.PostgresPassword, Database: myConfiguration.PostgresDatabase, DebugLog: myConfiguration.PostgresDebugLog})
 	if dbErr != nil {
-		log.Println("Error connecting to Postgres")
-		panic(dbErr.Error())
+		panic(dbErr)
 	}
-	defer db.Close()
-
-	if myConfiguration.PostgresDebugLog {
-		db.LogMode(true)
+	conn, dbErr := db.DB()
+	if dbErr != nil {
+		panic(dbErr)
 	}
+	defer conn.Close()
 
 	// Create tables if they do not exist
 	log.Println("Performing auto migrate")

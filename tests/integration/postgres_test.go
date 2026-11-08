@@ -31,7 +31,7 @@ func TestMain(m *testing.M) {
 	ctx := database.Context{Host: socket, Port: "55439", User: "ttnmapper_test", Database: "ttnmapper_integration"}
 	ctx.Init()
 	// Migrate real models, including their foreign keys and numeric types.
-	err = database.Db.AutoMigrate(&database.Device{}, &database.Frequency{}, &database.DataRate{}, &database.CodingRate{}, &database.AccuracySource{}, &database.Experiment{}, &database.User{}, &database.UserAgent{}, &database.Antenna{}, &database.FineTimestampKeyID{}, &database.Packet{}, &database.Gateway{}, &database.GatewayLocation{}, &database.GridCell{}, &database.RadarBeam{})
+	err = database.Db.AutoMigrate(&database.Device{}, &database.Frequency{}, &database.DataRate{}, &database.CodingRate{}, &database.AccuracySource{}, &database.Experiment{}, &database.User{}, &database.UserAgent{}, &database.Antenna{}, &database.FineTimestampKeyID{}, &database.Packet{}, &database.Gateway{}, &database.GatewayLocation{}, &database.GridCell{}, &database.RadarBeam{}, &database.AntennaFrequency{}, &database.AprsDevice{})
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
@@ -483,4 +483,36 @@ func TestLiveUpdateUsesCommittedRebuildIDs(t *testing.T) {
 		t.Fatalf("post-rebuild live beams=%+v", beams)
 	}
 	assertOtherAntenna(t, f)
+}
+
+func TestSharedFrequencyAssociationCounts(t *testing.T) {
+	msg, gw := message(t.Name(), time.Now().UTC().Truncate(time.Microsecond))
+	row := insert(t, msg, gw)
+	for i := 0; i < 2; i++ {
+		if err := database.RecordAntennaFrequency(database.Db, row.AntennaID, row.FrequencyID); err != nil {
+			t.Fatal(err)
+		}
+	}
+	var association database.AntennaFrequency
+	if err := database.Db.Where("antenna_id = ? AND frequency_id = ?", row.AntennaID, row.FrequencyID).First(&association).Error; err != nil {
+		t.Fatal(err)
+	}
+	if association.Count != 2 || association.LastHeard.IsZero() {
+		t.Fatalf("association=%+v", association)
+	}
+	var count int64
+	if err := database.Db.Model(&database.AntennaFrequency{}).Where("antenna_id = ?", row.AntennaID).Count(&count).Error; err != nil {
+		t.Fatal(err)
+	}
+	if count != 1 {
+		t.Fatalf("duplicate association rows=%d", count)
+	}
+	aborted := database.Db.Begin()
+	if aborted.Error != nil {
+		t.Fatal(aborted.Error)
+	}
+	aborted.Rollback()
+	if err := database.RecordAntennaFrequency(aborted, row.AntennaID, row.FrequencyID); err == nil {
+		t.Fatal("association write error was discarded")
+	}
 }

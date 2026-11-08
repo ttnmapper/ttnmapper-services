@@ -30,7 +30,7 @@ Root `go build -mod=vendor ./...` and `go test -mod=vendor ./...` cover the
 entire repository. The minimum Go version is 1.24, matching the tile server's
 existing requirement. The TTN throttled fork and APRS fork remain selected in the
 root `go.mod`. GORM v2/PostgreSQL dependencies now use the tile server's versions;
-the gateway-channel service's GORM v1 remains until its database adapter is migrated.
+all PostgreSQL services now use GORM v2 through a shared connection helper.
 Docker build contexts must be the repository root to include this shared module.
 
 ## PostgreSQL integration tests

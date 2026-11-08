@@ -181,3 +181,16 @@ Tile optimization commands moved into root `cmd/`. Shared libraries remain under
 `pkg/`; service documentation/configuration examples remain under `services/`.
 Root Dockerfile targets follow the relocated entry points; runtime executable and
 Compose service names are unchanged.
+
+## Shared database models and connections
+
+PostgreSQL services now share `pkg/database` models and `OpenPostgres`. Service
+adapters retain their own handles/caches. Gateway-channels migrated from GORM v1
+to the common GORM v2 and its frequency upsert retains its count/last-heard behavior.
+The GORM v1 dependency and vendored implementation are removed. Tile rendering
+uses aliases of the authoritative packet/gateway/grid models; APRS keeps only its
+service-specific query/cache code and aliases the common APRS model.
+
+Connection tests verify quoting and application-name limits. The disposable
+PostgreSQL suite passes with shared models, including frequency upsert/counting
+and propagation of write failures. No deployed schema or server was changed.

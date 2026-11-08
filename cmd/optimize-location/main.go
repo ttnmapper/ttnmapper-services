@@ -7,9 +7,8 @@ import (
 	"os"
 	"ttnmapper-services/internal/tilemapserver"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	"strconv"
+	"ttnmapper-services/pkg/database"
 )
 
 func main() {
@@ -31,16 +30,8 @@ func main() {
 	}
 
 	// Initialize database
-	dsn := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable application_name=optimize-location",
-		tms.MyConfiguration.PostgresHost,
-		tms.MyConfiguration.PostgresPort,
-		tms.MyConfiguration.PostgresUser,
-		tms.MyConfiguration.PostgresDatabase,
-		tms.MyConfiguration.PostgresPassword,
-	)
-	tms.DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
+	tms.DB, err = database.OpenPostgres(database.PostgresOptions{Host: tms.MyConfiguration.PostgresHost, Port: strconv.Itoa(tms.MyConfiguration.PostgresPort), User: tms.MyConfiguration.PostgresUser, Password: tms.MyConfiguration.PostgresPassword, Database: tms.MyConfiguration.PostgresDatabase, ApplicationName: "optimize-location"})
+
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
 	}

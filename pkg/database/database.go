@@ -2,12 +2,8 @@ package database
 
 import (
 	"github.com/patrickmn/go-cache"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"log"
-	"os"
-	"path/filepath"
 	"sync"
 	"time"
 )
@@ -31,45 +27,16 @@ var (
 	Db *gorm.DB
 )
 
-type Context struct {
-	Host     string
-	Port     string
-	User     string
-	Database string
-	Password string
-	DebugLog bool
-}
+type Context PostgresOptions
 
 func (databaseContext *Context) Init() {
-
-	var gormLogLevel = logger.Silent
-	if databaseContext.DebugLog {
-		log.Println("Database debug logging enabled")
-		gormLogLevel = logger.Info
-	}
-
-	// Postgres has a max length for application name of 63 chars. If we do not limit this we get a "received unexpected message" error
-	applicationName := filepath.Base(os.Args[0])
-	if len(applicationName) > 63 {
-		applicationName = applicationName[:63]
-	}
-
-	dsn := "host=" + databaseContext.Host + " port=" + databaseContext.Port + " user=" + databaseContext.User +
-		" dbname=" + databaseContext.Database + " password=" + databaseContext.Password + " sslmode=disable" +
-		" application_name=" + applicationName
-	log.Println(dsn)
 	var err error
-	Db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger:          logger.Default.LogMode(gormLogLevel),
-		CreateBatchSize: 1000,
-	})
+	Db, err = OpenPostgres(PostgresOptions(*databaseContext))
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
-
-	// Init caches
-	gatewayDbCache = cache.New(5*time.Minute, 1*time.Minute)
-	networkOnlineGatewaysCache = cache.New(5*time.Minute, 1*time.Minute)
+	gatewayDbCache = cache.New(5*time.Minute, time.Minute)
+	networkOnlineGatewaysCache = cache.New(5*time.Minute, time.Minute)
 }
 
 func AutoMigrate(models ...interface{}) {

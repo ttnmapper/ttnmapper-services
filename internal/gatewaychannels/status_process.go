@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 	"ttnmapper-services/internal/gatewaychannels/types"
+	"ttnmapper-services/pkg/database"
 )
 
 func processRawPackets() {
@@ -127,36 +128,5 @@ func cachedFrequency(frequency uint64, lookup func(uint64) (types.Frequency, err
 }
 
 func setAntennaFrequencyDb(antennaID uint, frequencyID uint) error {
-
-	//antennaFrequencyDb := types.AntennaFrequency{
-	//	AntennaID:   antennaID,
-	//	FrequencyID: frequencyID,
-	//}
-
-	/*
-		UPDATE totals
-		   SET count = count + 1
-		WHERE name = 'bill';
-
-		INSERT INTO customers (name, email)
-		VALUES
-			(
-				'Microsoft',
-				'hotline@microsoft.com'
-			)
-		ON CONFLICT (name)
-		DO
-				UPDATE
-			  SET email = EXCLUDED.email || ';' || customers.email;
-
-		db.Exec("UPDATE orders SET shipped_at=? WHERE id IN (?)", time.Now(), []int64{11,22,33})
-	*/
-	// Need to use a raw query because... ???
-	query := "INSERT INTO antenna_frequencies (antenna_id, frequency_id, count, last_heard) " +
-		"VALUES (?, ?, 1, NOW()) " +
-		"ON CONFLICT (antenna_id, frequency_id) DO " +
-		"UPDATE SET count = antenna_frequencies.count + 1, last_heard = NOW() " +
-		"WHERE antenna_frequencies.antenna_id = ? AND antenna_frequencies.frequency_id = ? "
-
-	return db.Exec(query, antennaID, frequencyID, antennaID, frequencyID).Error
+	return database.RecordAntennaFrequency(db, antennaID, frequencyID)
 }

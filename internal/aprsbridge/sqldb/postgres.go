@@ -1,13 +1,12 @@
 package sqldb
 
 import (
-	"fmt"
 	"github.com/patrickmn/go-cache"
-	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"log"
+	"strconv"
 	"time"
+	"ttnmapper-services/pkg/database"
 )
 
 type Credentials struct {
@@ -28,20 +27,9 @@ var (
 func (credentials *Credentials) Init() {
 	var err error
 
-	connectionString := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		credentials.Host, credentials.Port, credentials.User, credentials.Password, credentials.Database)
-
-	var gormLogLevel = logger.Silent
-	if credentials.DebugLog {
-		log.Println("Database debug logging enabled")
-		gormLogLevel = logger.Info
-	}
-
-	db, err = gorm.Open(postgres.Open(connectionString), &gorm.Config{
-		Logger: logger.Default.LogMode(gormLogLevel),
-	})
+	db, err = database.OpenPostgres(database.PostgresOptions{Host: credentials.Host, Port: strconv.Itoa(credentials.Port), User: credentials.User, Password: credentials.Password, Database: credentials.Database, DebugLog: credentials.DebugLog})
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	// Create tables if they do not exist

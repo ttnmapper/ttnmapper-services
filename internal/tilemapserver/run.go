@@ -6,15 +6,13 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	"strconv"
+	"ttnmapper-services/pkg/database"
 )
 
 /*
@@ -44,23 +42,8 @@ func Run() {
 
 	log.Printf("[Configuration]\n%s\n", PrettyPrint(MyConfiguration)) // output: [UserA, UserB]
 
-	var gormLogLevel = logger.Silent
-	if MyConfiguration.PostgresDebugLog {
-		log.Println("Database debug logging enabled")
-		gormLogLevel = logger.Info
-	}
+	DB, err = database.OpenPostgres(database.PostgresOptions{Host: MyConfiguration.PostgresHost, Port: strconv.Itoa(MyConfiguration.PostgresPort), User: MyConfiguration.PostgresUser, Password: MyConfiguration.PostgresPassword, Database: MyConfiguration.PostgresDatabase, DebugLog: MyConfiguration.PostgresDebugLog})
 
-	dsn := fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable application_name=%s",
-		MyConfiguration.PostgresHost,
-		MyConfiguration.PostgresPort,
-		MyConfiguration.PostgresUser,
-		MyConfiguration.PostgresDatabase,
-		MyConfiguration.PostgresPassword,
-		filepath.Base(os.Args[0]),
-	)
-	DB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(gormLogLevel),
-	})
 	if err != nil {
 		panic(err.Error())
 	}
