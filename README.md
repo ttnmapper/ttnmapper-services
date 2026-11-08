@@ -31,6 +31,27 @@ Root `go build ./...` and `go test ./...` do not traverse nested Go modules. Use
 the script to cover the entire repository. Each module uses `-mod=vendor` and can
 also be developed independently from its directory.
 
+## PostgreSQL integration tests
+
+Run `GO_BIN=/path/to/go scripts/check-postgres-integration.sh -v` explicitly.
+PostgreSQL server tools (`initdb`, `pg_ctl`, `createdb`) must be installed and the
+runner must be a non-root user. Set `PG_BIN` to their directory if needed; the
+runner also discovers Debian-style installations. No Docker dependency is needed.
+
+The script creates a fresh cluster under `/tmp`, disables TCP, uses a private Unix
+socket, and removes the cluster on exit. It accepts no existing server DSN and does
+not use the production `POSTGRES_*` settings. Tests have the `integration` build tag
+and are excluded from the ordinary six-module suite. Test selection flags such as
+`-run TestRebuild` can be passed to the script.
+
+The suite migrates the current Go models and verifies insertion, lookup reuse,
+foreign keys, numeric/nullable storage, and replay of non-experiment packets strictly
+after a gateway move. Failure injection currently documents two limitations:
+earlier packet rows survive a later insert failure, and rebuilds lose old aggregates
+if their replacement insert fails. These are characterization tests, not transaction
+or exactly-once guarantees. They do not validate an existing production schema or
+exercise RabbitMQ acknowledgement/redelivery.
+
 ## Services
 
 | Service | Source directory | Dockerfile |

@@ -69,6 +69,33 @@ The full six-module suite passes locally with Go 1.27.3 using
 The script applies a 60-second per-package timeout. These checks do not establish
 production database behavior, live API availability, or APRS delivery.
 
+## Disposable PostgreSQL integration validation (8 November 2026)
+
+The opt-in `scripts/check-postgres-integration.sh -v` suite passed against a fresh
+PostgreSQL 16.15 cluster using Go 1.27.3. PostgreSQL ran on a private temporary Unix
+socket with TCP disabled; the runner removed its cluster afterward. The default
+unit test script does not run these tagged tests.
+
+Verified production database helpers against schemas migrated from current models:
+
+- Foreign-key lookup values and reuse; packet timestamps stored at microsecond
+  precision; numeric rounding and nullable/experiment fields.
+- Invalid device foreign keys rejected; injected device-lookup failure followed
+  by a successful retry without a poisoned cache.
+- Replay excludes experiments, packets at/before the cutoff and other antennas.
+  Grid/radar rebuilding applies distance filtering, produces known counts and
+  geometry, preserves other antennas and produces the same result on a second run.
+- Injected packet insertion failure leaves earlier rows committed.
+- Injected grid/radar replacement failure exits the existing rebuild worker after
+  deleting the old aggregates, leaving zero rows for that antenna. Child processes
+  allow the parent test to inspect this state after the worker's fatal exit.
+
+The last two checks deliberately characterize current failure behavior. Transactional
+replacement of aggregates is the highest-priority follow-up; packet delivery-wide
+transactions/idempotency also need a decision. No production database, deployment
+or RabbitMQ service was contacted. The suite does not prove recovery under concurrent
+live aggregation or compatibility with an existing production schema.
+
 ## Small baseline repairs
 
 - Root NOC test: replace an obsolete `ttnmapper-gateway-update/utils` import with
