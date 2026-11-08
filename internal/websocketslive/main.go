@@ -7,9 +7,9 @@ import (
 	"github.com/streadway/amqp"
 	"log"
 	"net/http"
-	"ttnmapper-services/internal/websocketslive/types"
 	"ttnmapper-services/pkg/config"
 	"ttnmapper-services/pkg/queues"
+	"ttnmapper-services/pkg/types"
 	"ttnmapper-services/pkg/utils"
 )
 

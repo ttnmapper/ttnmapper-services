@@ -182,17 +182,6 @@ func newGridCell(antennaID uint, latitude, longitude float64) (database.GridCell
 	return database.GridCell{AntennaID: antennaID, X: tile.X, Y: tile.Y}, nil
 }
 
-func getGridCellNotDb(antennaID uint, latitude, longitude float64) (database.GridCell, error) {
-	cell, err := newGridCell(antennaID, latitude, longitude)
-	if err != nil {
-		return cell, err
-	}
-	if cached, ok := gridCellDbCache.Load(database.GridCellIndexer{AntennaID: antennaID, X: cell.X, Y: cell.Y}); ok {
-		return cached.(database.GridCell), nil
-	}
-	return cell, nil
-}
-
 func storeGridCellInCache(gridCell database.GridCell) {
 	// Save to cache
 	gridCellIndexer := database.GridCellIndexer{AntennaID: gridCell.AntennaID, X: gridCell.X, Y: gridCell.Y}

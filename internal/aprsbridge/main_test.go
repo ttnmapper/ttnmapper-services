@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 	"ttnmapper-services/internal/aprsbridge/sqldb"
-	"ttnmapper-services/internal/aprsbridge/types"
+	"ttnmapper-services/pkg/types"
 )
 
 func TestReportInterval(t *testing.T) {

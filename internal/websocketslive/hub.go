@@ -5,7 +5,7 @@
 package websocketslive
 
 import (
-	"ttnmapper-services/internal/websocketslive/types"
+	"ttnmapper-services/pkg/types"
 )
 
 // Hub owns client registration and delivers packets matching all supplied filters.

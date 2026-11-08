@@ -26,13 +26,13 @@ Gateway discovery currently loads network gateways through `GetNetworkGateways`,
 
 Relevant implementation files:
 
-- [Raster endpoints and selection](../pkg/tms/simcov_rasters.go)
-- [Browser rendering and interaction](../pkg/tms/debug/coverage.js)
-- [TIFF decoding](../pkg/tms/debug/coverage-worker.js)
-- [Debug map](../pkg/tms/debug/map.html)
-- [Configuration](../pkg/tms/common.go)
-- [Legacy simulation tiles](../pkg/tms/tile_simcov.go)
-- [Simulation and raster processing](../pkg/tms/signal_server.go)
+- [Raster endpoints and selection](../../internal/tilemapserver/simcov_rasters.go)
+- [Browser rendering and interaction](../../internal/tilemapserver/debug/coverage.js)
+- [TIFF decoding](../../internal/tilemapserver/debug/coverage-worker.js)
+- [Debug map](../../internal/tilemapserver/debug/map.html)
+- [Configuration](../../internal/tilemapserver/common.go)
+- [Legacy simulation tiles](../../internal/tilemapserver/tile_simcov.go)
+- [Simulation and raster processing](../../internal/tilemapserver/signal_server.go)
 
 ## Proposed rendering modes
 

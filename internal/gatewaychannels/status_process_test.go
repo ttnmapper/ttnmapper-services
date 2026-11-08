@@ -7,7 +7,8 @@ import (
 	"reflect"
 	"sync"
 	"testing"
-	"ttnmapper-services/internal/gatewaychannels/types"
+	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/types"
 )
 
 func TestProcessPackets(t *testing.T) {
@@ -46,25 +47,25 @@ func TestAssociateGateway(t *testing.T) {
 			msg := types.TtnMapperUplinkMessage{Frequency: 868100000}
 			gw := types.TtnMapperGateway{GatewayId: "gw"}
 			store := gatewayStore{
-				antenna: func(g types.TtnMapperGateway) (types.Gateway, error) {
+				antenna: func(g types.TtnMapperGateway) (database.Gateway, error) {
 					calls = append(calls, "antenna")
 					if !reflect.DeepEqual(g, gw) {
 						t.Error("wrong gateway")
 					}
 					if stage == "antenna" {
-						return types.Gateway{}, failure
+						return database.Gateway{}, failure
 					}
-					return types.Gateway{ID: 7}, nil
+					return database.Gateway{ID: 7}, nil
 				},
-				frequency: func(hz uint64) (types.Frequency, error) {
+				frequency: func(hz uint64) (database.Frequency, error) {
 					calls = append(calls, "frequency")
 					if hz != msg.Frequency {
 						t.Error("wrong frequency")
 					}
 					if stage == "frequency" {
-						return types.Frequency{}, failure
+						return database.Frequency{}, failure
 					}
-					return types.Frequency{ID: 9}, nil
+					return database.Frequency{ID: 9}, nil
 				},
 				associate: func(a, f uint) error {
 					calls = append(calls, "associate")
@@ -105,9 +106,9 @@ func resetCaches(t *testing.T) {
 func TestFrequencyCache(t *testing.T) {
 	resetCaches(t)
 	calls := 0
-	lookup := func(hz uint64) (types.Frequency, error) {
+	lookup := func(hz uint64) (database.Frequency, error) {
 		calls++
-		return types.Frequency{ID: uint(calls), Herz: hz}, nil
+		return database.Frequency{ID: uint(calls), Herz: hz}, nil
 	}
 	a, err := cachedFrequency(868100000, lookup)
 	if err != nil {
@@ -131,9 +132,9 @@ func TestFrequencyCache(t *testing.T) {
 func TestAntennaCache(t *testing.T) {
 	resetCaches(t)
 	calls := 0
-	lookup := func(gw types.TtnMapperGateway) (types.Gateway, error) {
+	lookup := func(gw types.TtnMapperGateway) (database.Gateway, error) {
 		calls++
-		return types.Gateway{ID: uint(calls)}, nil
+		return database.Gateway{ID: uint(calls)}, nil
 	}
 	for i, gw := range []types.TtnMapperGateway{{NetworkId: "one", GatewayId: "gw"}, {NetworkId: "two", GatewayId: "gw"}, {NetworkId: "one", GatewayId: "other"}, {NetworkId: "one", GatewayId: "gw", AntennaIndex: 1}} {
 		a, err := cachedAntenna(gw, lookup)
@@ -156,12 +157,12 @@ func TestFailedLookupsAreRetried(t *testing.T) {
 	resetCaches(t)
 	failure := errors.New("lookup failed")
 	calls := 0
-	lookup := func(hz uint64) (types.Frequency, error) {
+	lookup := func(hz uint64) (database.Frequency, error) {
 		calls++
 		if calls == 1 {
-			return types.Frequency{}, failure
+			return database.Frequency{}, failure
 		}
-		return types.Frequency{ID: 1, Herz: hz}, nil
+		return database.Frequency{ID: 1, Herz: hz}, nil
 	}
 	if _, err := cachedFrequency(868100000, lookup); !errors.Is(err, failure) {
 		t.Fatalf("error=%v", err)
@@ -170,12 +171,12 @@ func TestFailedLookupsAreRetried(t *testing.T) {
 		t.Fatalf("retry=%+v error=%v calls=%d", got, err, calls)
 	}
 	calls = 0
-	antenna := func(gw types.TtnMapperGateway) (types.Gateway, error) {
+	antenna := func(gw types.TtnMapperGateway) (database.Gateway, error) {
 		calls++
 		if calls == 1 {
-			return types.Gateway{}, failure
+			return database.Gateway{}, failure
 		}
-		return types.Gateway{ID: 2}, nil
+		return database.Gateway{ID: 2}, nil
 	}
 	gw := types.TtnMapperGateway{GatewayId: "gw"}
 	if _, err := cachedAntenna(gw, antenna); !errors.Is(err, failure) {
@@ -193,16 +194,16 @@ func TestRepeatedPacketsReuseIDsAndCountReceptions(t *testing.T) {
 	gatewayLookups, frequencyLookups := 0, 0
 	counts := make(map[[2]uint]int)
 	store := gatewayStore{
-		antenna: func(gw types.TtnMapperGateway) (types.Gateway, error) {
-			return cachedAntenna(gw, func(types.TtnMapperGateway) (types.Gateway, error) {
+		antenna: func(gw types.TtnMapperGateway) (database.Gateway, error) {
+			return cachedAntenna(gw, func(types.TtnMapperGateway) (database.Gateway, error) {
 				gatewayLookups++
-				return types.Gateway{ID: uint(gatewayLookups)}, nil
+				return database.Gateway{ID: uint(gatewayLookups)}, nil
 			})
 		},
-		frequency: func(hz uint64) (types.Frequency, error) {
-			return cachedFrequency(hz, func(uint64) (types.Frequency, error) {
+		frequency: func(hz uint64) (database.Frequency, error) {
+			return cachedFrequency(hz, func(uint64) (database.Frequency, error) {
 				frequencyLookups++
-				return types.Frequency{ID: uint(frequencyLookups)}, nil
+				return database.Frequency{ID: uint(frequencyLookups)}, nil
 			})
 		},
 		associate: func(a, f uint) error { counts[[2]uint{a, f}]++; return nil },

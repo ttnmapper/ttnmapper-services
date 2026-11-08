@@ -18,7 +18,7 @@ executable. `compile-tests` compiles test packages without running test cases;
 per package. No production credentials, live databases, RabbitMQ or APRS servers
 are required. HTTP fetch tests use in-memory transports; database query tests use
 GORM DryRun with automatic ping disabled. Tile-server tests use temporary files
-and local fake executables and still require the module's native build dependencies.
+and local fake executables. The real native simulator is built by the Docker target.
 
 Legacy manual migration, reprocessing, status-fetch and APRS-send checks were
 removed. Their replacement unit tests cover selected logic, not database execution
@@ -64,39 +64,43 @@ exercise RabbitMQ acknowledgement/redelivery.
 `cmd/<service>/main.go` contains each executable's entry point. Implementations
 and service-owned adapters live under `internal/<service>/`; shared contracts and
 infrastructure remain under `pkg/`. Maintenance/optimization tools are also under
-`cmd/`. The `services/` directories retain service documentation, configuration
-examples and the imported build manifests, not separate Go projects.
+`cmd/`. Service documentation lives under `docs/`; preserved tuning data lives under
+`examples/`. Original license notices are retained under `LICENSES/`.
 
 ## Services
 
-| Service | Source directory | Dockerfile |
-| --- | --- | --- |
-| postgres-insert-raw | `cmd/insert-raw` | `Dockerfile.insert-raw` |
-| aggregate | `cmd/aggregate` | `Dockerfile.aggregate` |
-| gateway-update | `cmd/gateway-update` | `Dockerfile.gateway-update` |
-| gateway-bbox | `cmd/gateway-boundingbox` | `Dockerfile.gateway-bbox` |
-| website-api | `cmd/website-api` | `Dockerfile.website-api` |
-| websockets-live | `cmd/websockets-live` | `Dockerfile.websockets-live` |
-| gateway-channels | `cmd/gateway-channels` | `Dockerfile.gateway-channels` |
-| ttn-to-aprs-bridge | `cmd/ttn-to-aprs-bridge` | `Dockerfile.ttn-to-aprs-bridge` |
-| ingress-api | `cmd/ingress-api` | `Dockerfile.ingress-api` |
-| tile-map-server | `cmd/tile-map-server` | `Dockerfile.tilemapserver` |
+| Service / Docker target | Entry point |
+| --- | --- |
+| `postgres-insert-raw` | `cmd/insert-raw` |
+| `aggregate` | `cmd/aggregate` |
+| `gateway-update` | `cmd/gateway-update` |
+| `gateway-bbox` | `cmd/gateway-boundingbox` |
+| `website-api` | `cmd/website-api` |
+| `ingress-api` | `cmd/ingress-api` |
+| `gateway-channels` | `cmd/gateway-channels` |
+| `websockets-live` | `cmd/websockets-live` |
+| `ttn-to-aprs-bridge` | `cmd/ttn-to-aprs-bridge` |
+| `tile-map-server` | `cmd/tile-map-server` |
 
-The consolidation was merged into `master`. The tile server includes
-the working changes from its original `simulated-coverage` branch, including
-Go/JavaScript tests and simulation documentation that were untracked at import.
-File hashes and the original source status are recorded in
-[`docs/tile-server-import.json`](docs/tile-server-import.json).
+The tile-server working changes from its original `simulated-coverage` branch are
+retained, including embedded browser assets and regression tests. Original file
+hashes and import status are recorded in
+[`docs/tile-server-import.json`](docs/tile-server-import.json). Those paths describe
+the import snapshot; the source has since moved and been consolidated.
 
-Ingress uses its committed source; its former local test edit was discarded
-during cleanup. The imported ChirpStack test was updated to use the current
-`NetworkId` field so test packages compile.
+Service details: [ingress API](docs/ingress-api.md), [tile server](docs/tile-map-server.md),
+and [APRS bridge](docs/aprs-bridge.md).
 
 All Compose Git build contexts use the plain repository URL and therefore build
-from the default-branch head. Root-level Dockerfiles support every service.
+from the default-branch head. One root `Dockerfile` builds all ten services with
+named targets. It retains `golang:latest` and the unpinned Signal-Server source.
 
-Example: `docker build -f Dockerfile.websockets-live -t websockets-live .`.
-The imported Dockerfiles also require the repository root as their build context.
+Run `scripts/build-images.sh` for all images, or pass service names, for example
+`scripts/build-images.sh website-api ingress-api`. `IMAGE_PREFIX` defaults to
+`ttnmapper`. The equivalent direct command is
+`docker build --pull --build-arg SERVICE=ingress-api --target ingress-api -t ttnmapper/ingress-api:latest .`.
+All scratch images include CA certificates. The tile-server target retains Ubuntu
+and its native terrain-simulation libraries. No image contains application config.
 
 All services and maintenance tools use hardcoded defaults overlaid by environment
 variables. Configuration files are not read or included in images. Set environment
@@ -115,9 +119,17 @@ Production orchestration lives in the separate `ttnmapper-deployment` repository
 Keep independent service processes, names, queues, API routes, and database schema
 behavior when maintaining these services.
 
-The services VM was deployed successfully from source commit `189c74d` on
-6 November 2026. See [validation and rollout evidence](docs/merge-validation.md).
-The separate production tile-server host has not been migrated.
+The operator confirmed the original services-VM rollout and production TMS source
+migration. The subsequent cleanup changes have not been deployed here. See
+[validation and rollout evidence](docs/merge-validation.md).
+
+## Continuous integration
+
+GitHub Actions runs static command builds, unit tests with the race detector,
+the browser regression, disposable PostgreSQL integration tests, and all ten
+Docker image builds on pull requests and pushes to `master`. It builds images
+without publishing or deploying them. Go uses the current stable release, matching
+the decision to keep `golang:latest` for Docker builds.
 
 ## Import provenance
 
@@ -126,13 +138,13 @@ includes the explicitly requested working changes; the original repositories ret
 their full Git histories. No runtime caches, compiled binaries, IDE state, or
 local credentials are imported. Original copyright notices are retained.
 
-| Original GitHub repository | Commit | Destination |
+| Original GitHub repository | Commit | Current implementation |
 | --- | --- | --- |
-| `ttnmapper/websockets-live` | `5c1d35effd361f4d18113c91a0ff09e2fac8e640` | `cmd/websockets-live` |
-| `ttnmapper/gateway-channels` | `220e100b2e9c32fb6bc0e879209417fc9175e3cd` | `cmd/gateway-channels` |
-| `ttnmapper/ttn-to-aprs-bridge` | `90aceb405eca83ab651f3b4cc1a56510c354d816` | `cmd/ttn-to-aprs-bridge` |
-| `ttnmapper/ingress-api` | `4e93ff6` | `cmd/ingress-api` |
-| `ttnmapper/tile-map-server` | `4efbeb9` plus working changes recorded in the manifest | `services/tile-map-server` |
+| `ttnmapper/websockets-live` | `5c1d35effd361f4d18113c91a0ff09e2fac8e640` | `internal/websocketslive` |
+| `ttnmapper/gateway-channels` | `220e100b2e9c32fb6bc0e879209417fc9175e3cd` | `internal/gatewaychannels` |
+| `ttnmapper/ttn-to-aprs-bridge` | `90aceb405eca83ab651f3b4cc1a56510c354d816` | `internal/aprsbridge` |
+| `ttnmapper/ingress-api` | `4e93ff6` | `internal/ingressapi` |
+| `ttnmapper/tile-map-server` | `4efbeb9` plus working changes recorded in the manifest | `internal/tilemapserver` |
 
 The root module also contains `cmd/optimize-location` and
 `cmd/optimize-radio`.

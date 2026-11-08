@@ -40,3 +40,8 @@ build/
 .env
 .env.*
 !.env.example
+
+# Local runtime state and editor metadata.
+**/tile_cache/
+**/srtm/
+**/.junie/

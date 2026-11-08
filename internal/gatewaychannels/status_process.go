@@ -6,8 +6,8 @@ import (
 	"github.com/streadway/amqp"
 	"log"
 	"time"
-	"ttnmapper-services/internal/gatewaychannels/types"
 	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/types"
 	"ttnmapper-services/pkg/utils"
 )
 
@@ -56,8 +56,8 @@ func updateGateway(message types.TtnMapperUplinkMessage, gateway types.TtnMapper
 }
 
 type gatewayStore struct {
-	antenna   func(types.TtnMapperGateway) (types.Gateway, error)
-	frequency func(uint64) (types.Frequency, error)
+	antenna   func(types.TtnMapperGateway) (database.Gateway, error)
+	frequency func(uint64) (database.Frequency, error)
 	associate func(uint, uint) error
 }
 
@@ -79,19 +79,19 @@ func associateGateway(message types.TtnMapperUplinkMessage, gateway types.TtnMap
 /*
 Takes a TTN Mapper Gateway and search for it in the database and return the database entry id
 */
-func getAntennaDb(gateway types.TtnMapperGateway) (types.Gateway, error) {
-	return cachedAntenna(gateway, func(gw types.TtnMapperGateway) (types.Gateway, error) {
-		entry := types.Gateway{NetworkId: gw.NetworkId, GatewayId: gw.GatewayId}
+func getAntennaDb(gateway types.TtnMapperGateway) (database.Gateway, error) {
+	return cachedAntenna(gateway, func(gw types.TtnMapperGateway) (database.Gateway, error) {
+		entry := database.Gateway{NetworkId: gw.NetworkId, GatewayId: gw.GatewayId}
 		err := db.FirstOrCreate(&entry, &entry).Error
 		return entry, err
 	})
 }
-func cachedAntenna(gateway types.TtnMapperGateway, lookup func(types.TtnMapperGateway) (types.Gateway, error)) (types.Gateway, error) {
+func cachedAntenna(gateway types.TtnMapperGateway, lookup func(types.TtnMapperGateway) (database.Gateway, error)) (database.Gateway, error) {
 
-	antennaIndexer := types.AntennaIndexer{NetworkId: gateway.NetworkId, GatewayId: gateway.GatewayId, AntennaIndex: gateway.AntennaIndex}
+	antennaIndexer := database.AntennaIndexer{NetworkId: gateway.NetworkId, GatewayId: gateway.GatewayId, AntennaIndex: gateway.AntennaIndex}
 	i, ok := antennaCache.Load(antennaIndexer)
 	if ok {
-		gatewayDb := i.(types.Gateway)
+		gatewayDb := i.(database.Gateway)
 		return gatewayDb, nil
 
 	} else {
@@ -105,17 +105,17 @@ func cachedAntenna(gateway types.TtnMapperGateway, lookup func(types.TtnMapperGa
 	}
 }
 
-func getFrequencyDb(frequency uint64) (types.Frequency, error) {
-	return cachedFrequency(frequency, func(hz uint64) (types.Frequency, error) {
-		entry := types.Frequency{Herz: hz}
+func getFrequencyDb(frequency uint64) (database.Frequency, error) {
+	return cachedFrequency(frequency, func(hz uint64) (database.Frequency, error) {
+		entry := database.Frequency{Herz: hz}
 		err := db.FirstOrCreate(&entry, &entry).Error
 		return entry, err
 	})
 }
-func cachedFrequency(frequency uint64, lookup func(uint64) (types.Frequency, error)) (types.Frequency, error) {
+func cachedFrequency(frequency uint64, lookup func(uint64) (database.Frequency, error)) (database.Frequency, error) {
 	i, ok := frequencyCache.Load(frequency)
 	if ok {
-		frequencyDb := i.(types.Frequency)
+		frequencyDb := i.(database.Frequency)
 		return frequencyDb, nil
 
 	} else {

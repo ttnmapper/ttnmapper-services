@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"ttnmapper-services/internal/aprsbridge/rabbit"
 	"ttnmapper-services/internal/aprsbridge/sqldb"
-	"ttnmapper-services/internal/aprsbridge/types"
 	"ttnmapper-services/pkg/config"
+	"ttnmapper-services/pkg/types"
 	"ttnmapper-services/pkg/utils"
 )
 

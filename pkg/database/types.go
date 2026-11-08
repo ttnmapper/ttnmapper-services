@@ -143,11 +143,6 @@ type Gateway struct {
 	Attributes datatypes.JSON // general info like frequency plan, description, etc
 }
 
-type TestTable struct {
-	ID         uint
-	Attributes datatypes.JSON
-}
-
 type GatewayLocation struct {
 	ID        uint
 	NetworkId string `gorm:"type:text;INDEX:idx_gtw_id_install"`

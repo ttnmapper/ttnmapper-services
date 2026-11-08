@@ -150,3 +150,15 @@ func TestFailedSavePreservesCachedAggregate(t *testing.T) {
 		t.Fatalf("failed save changed cached count: %+v", got)
 	}
 }
+
+// In-memory store used only by the isolated live-aggregation tests.
+func getGridCellNotDb(antennaID uint, latitude, longitude float64) (database.GridCell, error) {
+	cell, err := newGridCell(antennaID, latitude, longitude)
+	if err != nil {
+		return cell, err
+	}
+	if cached, ok := gridCellDbCache.Load(database.GridCellIndexer{AntennaID: antennaID, X: cell.X, Y: cell.Y}); ok {
+		return cached.(database.GridCell), nil
+	}
+	return cell, nil
+}

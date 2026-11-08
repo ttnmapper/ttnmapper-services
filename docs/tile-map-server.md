@@ -1,9 +1,9 @@
 # CoverageMap.net (a.k.a. TTN Mapper)
 
 People drive around with LoRaWAN sensors, reporting RSSI, SNR, location and other radio parameters.
-They opt-in to upload these "packets" to TTN Mapper, where they are received by the [ingress-api](../ingress-api/).
-These packets are written to PostgreSQL by a microservice ([source](../../cmd/insert-raw/)).
-These packets are aggregated to zoom level 19 tiles (slippy map / OpenStreetMap tiles) by a microservice ([source](../../cmd/aggregate/)), and written to a database table.
+They opt-in to upload these "packets" to TTN Mapper, where they are received by the [ingress-api](ingress-api.md).
+These packets are written to PostgreSQL by a microservice ([source](../internal/insertraw/)).
+These packets are aggregated to zoom level 19 tiles (slippy map / OpenStreetMap tiles) by a microservice ([source](../internal/aggregate/)), and written to a database table.
 
 ## This project - the tile map server
 
@@ -46,7 +46,7 @@ Debug / comparison endpoints:
 
 We are adding simulated coverage layers, per gateway and per network.
 
-Simulations are produced by shelling out to an external [Signal-Server](https://github.com/Cloud-RF/Signal-Server) binary
+Simulations are produced by shelling out to an external [Signal-Server](https://github.com/loorisr/Signal-Server) binary
 (configured via `SIGNAL_SERVER_BIN`), using the Longley-Rice (ITM) propagation model.
 Terrain is taken from Copernicus DEM tiles, which are downloaded on demand into `SIGNAL_SERVER_SRTM_DIR`.
 Simulation results are cached to disk per gateway (a `.gob` sample cache plus the raw `.tif`) and re-used to
@@ -73,7 +73,7 @@ gateway's simulation cache is detected as stale and the coverage is re-simulated
 
 Tuning the simulations further from the measured packets / aggregated z19 tiles is still a work in progress.
 
-## Configuration
+## Environment configuration
 
 Configuration uses environment variables over the defaults in `internal/tilemapserver/common.go`. No configuration file is read. Notable variables:
 
@@ -87,9 +87,9 @@ Configuration uses environment variables over the defaults in `internal/tilemaps
 
 ### Simulation CPU budget
 
-`SignalServerMaxProcesses` (`SIGNAL_SERVER_MAX_PROCESSES`, default `1`) limits
+`SIGNAL_SERVER_MAX_PROCESSES` (default `1`) limits
 simultaneous Signal-Server processes within each Go process, including terrain-elevation queries and
-offline optimization. `SignalServerThreads` (`SIGNAL_SERVER_THREADS`, default
+offline optimization. `SIGNAL_SERVER_THREADS` (default
 `0`) controls the binary's `-number_threads` option. Zero divides the CPU budget
 equally across the configured processes. Explicit settings are clamped so that
 processes × threads does not exceed `GOMAXPROCS` or the logical CPU count. Set `GOMAXPROCS` explicitly to
@@ -101,7 +101,7 @@ Setting `SIGNAL_SERVER_MAX_PROCESSES=2` runs up to two processes with four threa
 each. More processes also require more memory; measure both single-gateway
 latency and network throughput before raising this limit.
 
-`SignalServerTimeoutSeconds` (`SIGNAL_SERVER_TIMEOUT_SECONDS`, default `300`)
+`SIGNAL_SERVER_TIMEOUT_SECONDS` (default `300`)
 limits each binary invocation after it acquires a process slot. Queue time is
 additional. Coverage is still generated synchronously on demand.
 
@@ -140,4 +140,6 @@ fallback keeps progressive loading and strongest-signal composition, renders at
 most one million viewport pixels, and yields between row batches to keep the map
 responsive. Its rendering can be slower than WebGL2 for many overlapping gateways.
 
-Run client regression tests with `node --test pkg/tms/debug/coverage.test.cjs`.
+Run client regression tests with `node --test internal/tilemapserver/debug/coverage.test.cjs`.
+
+An example of persisted per-gateway optimization data is retained at `examples/gateway_params.json`. Set `GATEWAY_PARAMS_FILE` to an explicit writable path when using that data.

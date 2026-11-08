@@ -154,3 +154,25 @@ func TestFailedSavePreservesCachedAggregate(t *testing.T) {
 		t.Fatalf("failed save changed cached count: %+v", got)
 	}
 }
+
+// In-memory store used only by the isolated live-aggregation tests.
+func getRadarBeamNotDb(antennaId uint, level int, bearing uint) (database.RadarBeam, error) {
+	radarBeam := database.RadarBeam{}
+
+	// Try and find in cache
+	radarBeamIndexer := database.RadarBeamIndexer{
+		AntennaID: antennaId,
+		Level:     level,
+		Bearing:   bearing,
+	}
+	i, ok := radarBeamDbCache.Load(radarBeamIndexer)
+	if ok {
+		radarBeam = i.(database.RadarBeam)
+		//log.Print("Found grid cell in cache")
+	} else {
+		radarBeam.AntennaID = antennaId
+		radarBeam.Level = level
+		radarBeam.Bearing = bearing
+	}
+	return radarBeam, nil
+}

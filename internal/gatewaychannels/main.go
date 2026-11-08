@@ -9,7 +9,6 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"ttnmapper-services/internal/gatewaychannels/types"
 	"ttnmapper-services/pkg/config"
 	"ttnmapper-services/pkg/database"
 	"ttnmapper-services/pkg/utils"
@@ -102,7 +101,7 @@ func Run() {
 	// Create tables if they do not exist
 	log.Println("Performing auto migrate")
 	db.AutoMigrate(
-		&types.AntennaFrequency{},
+		&database.AntennaFrequency{},
 	)
 
 	// Start amqp listener on this thread - blocking function
