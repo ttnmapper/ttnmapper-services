@@ -1,8 +1,0 @@
-.git
-.idea
-.run
-build
-**/conf.json
-**/tile_cache
-**/srtm
-**/*.test

@@ -1,4 +1,12 @@
 .git
-.idea
-.run
+.github
+**/.idea
+**/.run
+**/.junie
 build
+**/conf.json
+**/.env
+**/.env.*
+**/tile_cache
+**/srtm
+**/*.test
