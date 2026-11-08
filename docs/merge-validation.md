@@ -171,3 +171,13 @@ continues emitting gateway descriptions under `description`. The public WebSocke
 feed uses an explicit projection that retains its existing fields, rather than
 exposing newly available internal network/status metadata. Contract tests cover
 JSON field names, large nanosecond timestamps and that public projection.
+
+## Consistent service layout
+
+All ten service executables now have thin entry points in `cmd/`, calling their
+implementations in `internal/`. Imported service subpackages and tile-server
+embedded debug assets moved together, preserving relative test fixture paths.
+Tile optimization commands moved into root `cmd/`. Shared libraries remain under
+`pkg/`; service documentation/configuration examples remain under `services/`.
+Root Dockerfile targets follow the relocated entry points; runtime executable and
+Compose service names are unchanged.

@@ -59,6 +59,14 @@ still survive a later raw insertion failure; delivery-wide transactions/idempote
 remain separate work. The suite does not validate an existing production schema or
 exercise RabbitMQ acknowledgement/redelivery.
 
+## Layout
+
+`cmd/<service>/main.go` contains each executable's entry point. Implementations
+and service-owned adapters live under `internal/<service>/`; shared contracts and
+infrastructure remain under `pkg/`. Maintenance/optimization tools are also under
+`cmd/`. The `services/` directories retain service documentation, configuration
+examples and the imported build manifests, not separate Go projects.
+
 ## Services
 
 | Service | Source directory | Dockerfile |
@@ -68,10 +76,10 @@ exercise RabbitMQ acknowledgement/redelivery.
 | gateway-update | `cmd/gateway-update` / repository root | `Dockerfile.gateway-update` |
 | gateway-bbox | `cmd/gateway-boundingbox` / repository root | `Dockerfile.gateway-bbox` |
 | website-api | `cmd/website-api` / repository root | `Dockerfile.website-api` |
-| websockets-live | `services/websockets-live` | `Dockerfile.websockets-live` |
-| gateway-channels | `services/gateway-channels` | `Dockerfile.gateway-channels` |
-| ttn-to-aprs-bridge | `services/ttn-to-aprs-bridge` | `Dockerfile.ttn-to-aprs-bridge` |
-| ingress-api | `services/ingress-api` | `Dockerfile.ingress-api` |
+| websockets-live | `cmd/websockets-live` | `Dockerfile.websockets-live` |
+| gateway-channels | `cmd/gateway-channels` | `Dockerfile.gateway-channels` |
+| ttn-to-aprs-bridge | `cmd/ttn-to-aprs-bridge` | `Dockerfile.ttn-to-aprs-bridge` |
+| ingress-api | `cmd/ingress-api` | `Dockerfile.ingress-api` |
 | tile-map-server | `services/tile-map-server` | `Dockerfile.tilemapserver` |
 
 The consolidation was merged into `master`. The tile server includes
@@ -112,13 +120,13 @@ local credentials are imported. Original copyright notices are retained.
 
 | Original GitHub repository | Commit | Destination |
 | --- | --- | --- |
-| `ttnmapper/websockets-live` | `5c1d35effd361f4d18113c91a0ff09e2fac8e640` | `services/websockets-live` |
-| `ttnmapper/gateway-channels` | `220e100b2e9c32fb6bc0e879209417fc9175e3cd` | `services/gateway-channels` |
-| `ttnmapper/ttn-to-aprs-bridge` | `90aceb405eca83ab651f3b4cc1a56510c354d816` | `services/ttn-to-aprs-bridge` |
-| `ttnmapper/ingress-api` | `4e93ff6` | `services/ingress-api` |
+| `ttnmapper/websockets-live` | `5c1d35effd361f4d18113c91a0ff09e2fac8e640` | `cmd/websockets-live` |
+| `ttnmapper/gateway-channels` | `220e100b2e9c32fb6bc0e879209417fc9175e3cd` | `cmd/gateway-channels` |
+| `ttnmapper/ttn-to-aprs-bridge` | `90aceb405eca83ab651f3b4cc1a56510c354d816` | `cmd/ttn-to-aprs-bridge` |
+| `ttnmapper/ingress-api` | `4e93ff6` | `cmd/ingress-api` |
 | `ttnmapper/tile-map-server` | `4efbeb9` plus working changes recorded in the manifest | `services/tile-map-server` |
 
-The tile-server module also contains `cmd/optimize-location` and
+The root module also contains `cmd/optimize-location` and
 `cmd/optimize-radio`.
 
 Existing maintenance commands remain under `cmd/`: `clean-gateway-locations`,
