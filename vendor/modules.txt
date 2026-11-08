@@ -20,11 +20,6 @@ github.com/auth0/go-jwt-middleware
 # github.com/beorn7/perks v1.0.1
 ## explicit; go 1.11
 github.com/beorn7/perks/quantile
-# github.com/brocaar/chirpstack-api/go/v3 v3.11.1
-## explicit; go 1.16
-github.com/brocaar/chirpstack-api/go/v3/as/integration
-github.com/brocaar/chirpstack-api/go/v3/common
-github.com/brocaar/chirpstack-api/go/v3/gw
 # github.com/bserdar/jsonstream v0.0.0-20190428032403-9f1769267072
 ## explicit
 github.com/bserdar/jsonstream

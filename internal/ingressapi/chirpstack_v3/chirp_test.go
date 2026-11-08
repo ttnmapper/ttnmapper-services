@@ -6,33 +6,17 @@ import (
 	"testing"
 	"ttnmapper-services/internal/ingressapi/types"
 	sharedutil "ttnmapper-services/pkg/utils"
-
-	chirpstack "github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/golang/protobuf/jsonpb"
 )
 
 func TestChirpV3(t *testing.T) {
-	// Open our jsonFile
-	body, err := os.Open("chirp_v3_output.json")
-
-	// if we os.Open returns an error then handle it
+	body, err := os.ReadFile("chirp_v3_output.json")
 	if err != nil {
-		t.Error(err)
-		return
+		t.Fatal(err)
 	}
-
-	defer body.Close()
-	unmarshaler := &jsonpb.Unmarshaler{
-		AllowUnknownFields: true, // we don't want to fail on unknown fields
-	}
-
-	var packetOut types.TtnMapperUplinkMessage
-	packetOut.NetworkId = types.NS_CHIRP + "://test.example"
-
-	var packetIn chirpstack.UplinkEvent
-	if err := unmarshaler.Unmarshal(body, &packetIn); err != nil {
-		t.Error(err)
-		return
+	packetOut := types.TtnMapperUplinkMessage{NetworkId: types.NS_CHIRP + "://test.example"}
+	packetIn, err := decodeUplinkEvent(body)
+	if err != nil {
+		t.Fatal(err)
 	}
 	// Gateway
 	// "location": {

@@ -10,7 +10,6 @@ require (
 	github.com/766b/chi-prometheus v0.0.0-20180509160047-46ac2b31aa30
 	github.com/artyom/csvstruct v1.1.0
 	github.com/auth0/go-jwt-middleware v1.0.1
-	github.com/brocaar/chirpstack-api/go/v3 v3.11.1
 	github.com/bserdar/jsonstream v0.0.0-20190428032403-9f1769267072
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/chirpstack/chirpstack/api/go/v4 v4.6.0

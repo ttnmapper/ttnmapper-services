@@ -29,6 +29,9 @@ publishing images or deploying services.
   fields. The public WebSocket projection preserves its original output fields.
 - Ingress handlers use synthetic packets, injected validation and in-memory queues;
   DNS-backed production email checks are not invoked by handler unit tests.
+  Combined ingress tests exercise ChirpStack v3 JSON and v4 JSON/protobuf routes
+  with the default strict protobuf registry. v3 compatibility tests cover field
+  aliases, quoted numbers, enum encodings, base64 IDs and fine timestamps.
 - Raw insertion tests cover filtering, conversion, database/acknowledgement failures
   and forwarding only stored gateways. Conversion tests cover lookup reuse, caches,
   timestamps, numeric bounds and optional fields.
@@ -42,6 +45,9 @@ publishing images or deploying services.
   acknowledgement, prefetch and persistence flags. No live broker is contacted.
 - Configuration tests verify hardcoded defaults, environment overrides, invalid
   values and that configuration files are ignored. Startup configuration is env-only.
+  Configuration values are no longer dumped at startup, and parser errors omit
+  supplied values. In-memory APRS transport tests cover login, frame delivery,
+  disconnects and cancellation without logging credentials.
 
 Service-specific validation policies and query/cache adapters remain local. Shared
 models/connections use GORM v2. Go's minimum version remains 1.24, the tile server's
@@ -68,9 +74,14 @@ aggregation, gateway processing and WebSocket consumption. All eight listed
 RabbitMQ queues had one consumer and no backlog; Prometheus reported ready.
 APRS authenticated, without independent confirmation of frame delivery.
 
-The operator subsequently confirmed server Compose updates and the production TMS
-source migration. No deployment of the later module/layout/infrastructure cleanup
-has been performed here. Public endpoint checks, individual scrape-target health
-and sustained runtime stability were not independently established by that output.
+On 8 November 2026 the operator rebuilt and deployed the module/layout/infrastructure
+cleanup on both hosts. Supplied services-vm output showed all ten application
+containers running after four minutes, all eight queues with one consumer and no
+backlog, and Prometheus ready. Production TMS output showed both application
+images built and containers replaced, with the API and tile server starting.
+The TMS configuration directory now links into the deployment Git checkout.
+These logs predate the credential logging and protobuf fixes described above;
+those fixes need another deployment. Public endpoint checks, individual scrape-target
+health and sustained runtime stability were not independently established.
 Historical rollback image tags were removed during operator-requested cleanup;
 the old rollback manifest is not a ready-to-use recovery mechanism.

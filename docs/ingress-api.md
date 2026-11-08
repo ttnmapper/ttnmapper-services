@@ -6,6 +6,11 @@ REST API where new raw measurement data will be received.
 
 Configuration comes from environment variables over the defaults in `internal/ingressapi/main.go`. No configuration file is read.
 
+ChirpStack v3 webhooks are decoded as JSON without importing the legacy v3
+protobuf descriptors. ChirpStack v4 continues to accept JSON and protobuf.
+Both versions run in the same ingress process with protobuf registration
+conflicts treated as errors; no linker or environment workaround is required.
+
 | Setting | Type | Environment variable | Description |
 | --- | --- | --- | --- |
 | AmqpHost     | string | AMQP_HOST | The hostname for the server where RabbitMQ is running.

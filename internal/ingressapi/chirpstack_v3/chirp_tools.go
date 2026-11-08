@@ -3,8 +3,6 @@ package chirpstack_v3
 import (
 	"encoding/hex"
 	"encoding/json"
-	chirpstack "github.com/brocaar/chirpstack-api/go/v3/as/integration"
-	"github.com/brocaar/chirpstack-api/go/v3/gw"
 	"strconv"
 	"strings"
 	"time"
@@ -12,7 +10,7 @@ import (
 	"ttnmapper-services/internal/ingressapi/utils"
 )
 
-func ParseChirpV3Payload(packetIn chirpstack.UplinkEvent, packetOut *types.TtnMapperUplinkMessage) error {
+func ParseChirpV3Payload(packetIn UplinkEvent, packetOut *types.TtnMapperUplinkMessage) error {
 	var payloadFieldsIn map[string]interface{}
 	if err := json.Unmarshal([]byte(packetIn.ObjectJson), &payloadFieldsIn); err != nil {
 		return err
@@ -25,7 +23,7 @@ func ParseChirpV3Payload(packetIn chirpstack.UplinkEvent, packetOut *types.TtnMa
 	return nil
 }
 
-func CopyChirpV3Fields(packetIn chirpstack.UplinkEvent, packetOut *types.TtnMapperUplinkMessage) {
+func CopyChirpV3Fields(packetIn UplinkEvent, packetOut *types.TtnMapperUplinkMessage) {
 	packetOut.Time = time.Now().UnixNano()
 
 	packetOut.AppID = packetIn.ApplicationName
@@ -39,12 +37,12 @@ func CopyChirpV3Fields(packetIn chirpstack.UplinkEvent, packetOut *types.TtnMapp
 	packetOut.Modulation = packetIn.TxInfo.Modulation.String()
 
 	if packetOut.Modulation == "LORA" {
-		modInfo := packetIn.TxInfo.GetLoraModulationInfo()
+		modInfo := packetIn.TxInfo.LoraModulationInfo
 		packetOut.SpreadingFactor = uint8(modInfo.SpreadingFactor)
 		packetOut.Bandwidth = uint64(modInfo.Bandwidth * 1000) // kHz to Hz
 		packetOut.CodingRate = modInfo.CodeRate
 	} else { // FSK
-		modInfo := packetIn.TxInfo.GetFskModulationInfo()
+		modInfo := packetIn.TxInfo.FskModulationInfo
 		packetOut.Bitrate = uint64(modInfo.Datarate)
 	}
 
@@ -65,31 +63,31 @@ func CopyChirpV3Fields(packetIn chirpstack.UplinkEvent, packetOut *types.TtnMapp
 
 		// gateway Time is the wall clock time
 		if gatewayIn.Time != nil {
-			gatewayOut.Time = int64(gatewayIn.Time.Nanos)
+			gatewayOut.Time = int64(gatewayIn.Time.Nanosecond())
 		}
 
 		// gateway Timestamp is the internal clock counter of the concentrator
 		// not provided by ChirpStack
 
 		// Fine timestamp - not encrypted
-		if gatewayIn.FineTimestampType == gw.FineTimestampType_PLAIN {
-			gatewayOut.FineTimestamp = uint64(gatewayIn.GetPlainFineTimestamp().Time.Nanos)
+		if gatewayIn.FineTimestampType == fineTimestampPlain {
+			gatewayOut.FineTimestamp = uint64(gatewayIn.PlainFineTimestamp.Time.Nanosecond())
 		}
 		// Fine timestamp - encrypted
-		if gatewayIn.FineTimestampType == gw.FineTimestampType_ENCRYPTED {
-			gatewayOut.FineTimestampEncrypted = gatewayIn.GetEncryptedFineTimestamp().EncryptedNs
-			gatewayOut.FineTimestampEncryptedKeyId = strconv.Itoa(int(gatewayIn.GetEncryptedFineTimestamp().AesKeyIndex))
+		if gatewayIn.FineTimestampType == fineTimestampEncrypted {
+			gatewayOut.FineTimestampEncrypted = gatewayIn.EncryptedFineTimestamp.EncryptedNs
+			gatewayOut.FineTimestampEncryptedKeyId = strconv.Itoa(int(gatewayIn.EncryptedFineTimestamp.AesKeyIndex))
 		}
 
 		gatewayOut.AntennaIndex = uint8(gatewayIn.Antenna)
-		gatewayOut.ChannelIndex = gatewayIn.Channel
+		gatewayOut.ChannelIndex = uint32(gatewayIn.Channel)
 		gatewayOut.Rssi = float32(gatewayIn.Rssi)
 		// Missing Channel/Signal RSSI
 		gatewayOut.Snr = float32(gatewayIn.LoraSnr)
 
 		if gatewayIn.Location != nil {
-			gatewayOut.Latitude = gatewayIn.Location.Latitude
-			gatewayOut.Longitude = gatewayIn.Location.Longitude
+			gatewayOut.Latitude = float64(gatewayIn.Location.Latitude)
+			gatewayOut.Longitude = float64(gatewayIn.Location.Longitude)
 			gatewayOut.Altitude = int32(gatewayIn.Location.Altitude)
 			gatewayOut.LocationAccuracy = int32(gatewayIn.Location.Accuracy)
 			gatewayOut.LocationSource = gatewayIn.Location.Source.String()

@@ -17,6 +17,8 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      GOLANG_PROTOBUF_REGISTRATION_CONFLICT: panic
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7

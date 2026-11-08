@@ -1,7 +1,6 @@
 package chirpstack_v3
 
 import (
-	"bytes"
 	"io/ioutil"
 	"log"
 	"math/rand"
@@ -10,9 +9,7 @@ import (
 	"ttnmapper-services/internal/ingressapi/types"
 	"ttnmapper-services/internal/ingressapi/utils"
 
-	chirpstack "github.com/brocaar/chirpstack-api/go/v3/as/integration"
 	"github.com/go-chi/render"
-	"github.com/golang/protobuf/jsonpb"
 )
 
 /*
@@ -65,13 +62,8 @@ func (handlerContext *Context) PostChirpV3Event(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	unmarshaler := &jsonpb.Unmarshaler{
-		AllowUnknownFields: true, // we don't want to fail on unknown fields
-	}
-
-	log.Printf("%+v", string(body))
-	var packetIn chirpstack.UplinkEvent
-	if err := unmarshaler.Unmarshal(bytes.NewReader(body), &packetIn); err != nil {
+	packetIn, err := decodeUplinkEvent(body)
+	if err != nil {
 		response["success"] = false
 		response["message"] = "Can not parse json body"
 		log.Print("[" + i + "] " + err.Error())

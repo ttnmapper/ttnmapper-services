@@ -7,10 +7,7 @@ COPY . .
 ARG SERVICE
 RUN --mount=type=cache,target=/root/.cache/go-build \
     test -n "$SERVICE" && \
-    if [ "$SERVICE" = ingress-api ]; then \
-      set -- -ldflags '-X google.golang.org/protobuf/reflect/protoregistry.conflictPolicy=warn'; \
-    else set --; fi && \
-    go build -mod=vendor "$@" -o /out/service "./cmd/$SERVICE"
+    go build -mod=vendor -o /out/service "./cmd/$SERVICE"
 
 FROM scratch AS runtime-base
 WORKDIR /root
