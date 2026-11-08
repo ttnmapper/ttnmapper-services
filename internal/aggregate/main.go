@@ -7,7 +7,6 @@ import (
 	"time"
 	"ttnmapper-services/pkg/aggregations"
 	"ttnmapper-services/pkg/database"
-	"ttnmapper-services/pkg/utils"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"ttnmapper-services/pkg/config"
@@ -68,8 +67,6 @@ func Run() {
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
-	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {

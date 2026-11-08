@@ -44,8 +44,6 @@ func Run() {
 		log.Fatal("Invalid configuration: ", err)
 	}
 
-	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
-
 	go subscribeToRabbit()
 
 	flag.Parse()

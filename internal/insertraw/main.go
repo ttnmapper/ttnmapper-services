@@ -82,8 +82,6 @@ func Run() {
 		log.Fatal(err.Error())
 	}
 
-	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
-
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:"+myConfiguration.PrometheusPort, nil)

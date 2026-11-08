@@ -38,8 +38,6 @@ func Run() {
 		log.Fatal("Invalid configuration: ", err)
 	}
 
-	log.Printf("[Configuration]\n%s\n", sharedutil.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
-
 	router := Routes(publishChannel)
 
 	log.Print("[Routes]")

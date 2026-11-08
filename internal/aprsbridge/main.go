@@ -1,6 +1,7 @@
 package aprsbridge
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"github.com/ebarkie/aprs"
@@ -12,7 +13,6 @@ import (
 	"ttnmapper-services/internal/aprsbridge/sqldb"
 	"ttnmapper-services/pkg/config"
 	"ttnmapper-services/pkg/types"
-	"ttnmapper-services/pkg/utils"
 )
 
 type Configuration struct {
@@ -70,8 +70,6 @@ func Run() {
 		log.Fatal("Invalid configuration: ", err)
 	}
 
-	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
-
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
 		err := http.ListenAndServe("0.0.0.0:"+myConfiguration.PrometheusPort, nil)
@@ -111,7 +109,7 @@ func Run() {
 	go rabbitCredentials.SubscribeToRabbit()
 
 	aprsFramesChannel := make(chan aprs.Frame)
-	go aprs.SendTCPFromChannel(myConfiguration.AprsServer,
+	go sendAPRSFrames(context.Background(), myConfiguration.AprsServer,
 		aprs.Addr{Call: myConfiguration.AprsRelayUser},
 		myConfiguration.AprsRelayPassword, aprsFramesChannel)
 

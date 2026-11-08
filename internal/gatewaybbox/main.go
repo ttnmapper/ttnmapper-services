@@ -59,8 +59,6 @@ func Run() {
 		log.Fatal(err.Error())
 	}
 
-	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
-
 	log.Println("Init database")
 	databaseContext := database.Context{
 		Host:     myConfiguration.PostgresHost,

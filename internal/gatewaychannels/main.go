@@ -11,7 +11,6 @@ import (
 	"sync"
 	"ttnmapper-services/pkg/config"
 	"ttnmapper-services/pkg/database"
-	"ttnmapper-services/pkg/utils"
 )
 
 type Configuration struct {
@@ -76,8 +75,6 @@ func Run() {
 	if err != nil {
 		log.Fatal("Invalid configuration: ", err)
 	}
-
-	log.Printf("[Configuration]\n%s\n", utils.PrettyPrint(myConfiguration)) // output: [UserA, UserB]
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {

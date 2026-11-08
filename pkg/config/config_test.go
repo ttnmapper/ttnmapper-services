@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -25,6 +26,20 @@ func TestEnvironmentOverridesDefaultsAndIgnoresConfigFiles(t *testing.T) {
 	}
 	if got.Host != "environment" || got.Port != 6432 || !got.Enabled || got.Unchanged != "default" {
 		t.Fatalf("settings=%+v", got)
+	}
+}
+
+func TestInvalidSecretIsNotIncludedInError(t *testing.T) {
+	var got struct {
+		AprsRelayPassword int `env:"TEST_APRS_PASSWORD"`
+	}
+	t.Setenv("TEST_APRS_PASSWORD", "private-passcode")
+	err := Environment(&got)
+	if err == nil || !strings.Contains(err.Error(), "AprsRelayPassword") {
+		t.Fatalf("expected an error identifying the invalid field, got %v", err)
+	}
+	if strings.Contains(err.Error(), "private-passcode") {
+		t.Fatal("configuration error exposes secret")
 	}
 }
 func TestInvalidEnvironmentReturnsError(t *testing.T) {
