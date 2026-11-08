@@ -161,3 +161,13 @@ module. Toolchain pinning, image/release modernization and CI remain deferred.
 The check script now checks the whole repository once. Go 1.24's vet checks exposed
 nonconstant logging format strings, corrected without changing their messages.
 The GORM query test now accounts for the driver's parameterized LIMIT.
+
+## Shared message contracts
+
+`pkg/types` is the single definition of uplink, gateway and gateway-moved messages.
+Service-local type names are aliases while their other models are reconciled.
+Legacy optional network fields and gateway descriptions remain readable. Ingress
+continues emitting gateway descriptions under `description`. The public WebSocket
+feed uses an explicit projection that retains its existing fields, rather than
+exposing newly available internal network/status metadata. Contract tests cover
+JSON field names, large nanosecond timestamps and that public projection.

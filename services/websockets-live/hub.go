@@ -5,7 +5,6 @@
 package main
 
 import (
-	"encoding/json"
 	"ttnmapper-services/services/websockets-live/types"
 )
 
@@ -62,7 +61,7 @@ func (c *Client) matches(message types.TtnMapperUplinkMessage) bool {
 		(c.experiment == "" || c.experiment == message.Experiment)
 }
 func (h *Hub) deliver(message types.TtnMapperUplinkMessage) {
-	data, err := json.Marshal(message)
+	data, err := marshalLiveMessage(message)
 	if err != nil {
 		return
 	}

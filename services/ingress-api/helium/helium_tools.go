@@ -50,7 +50,7 @@ func CopyHeliumFields(packetIn UplinkMessage, packetOut *types.TtnMapperUplinkMe
 			NetworkId:                   packetOut.NetworkId,
 			GatewayId:                   hotspot.Id,
 			GatewayEui:                  "",
-			Name:                        hotspot.Name,
+			Description:                 hotspot.Name,
 			AntennaIndex:                0,
 			Time:                        hotspot.ReportedAt * 1000000, // ms to ns
 			Timestamp:                   0,

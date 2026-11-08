@@ -149,7 +149,7 @@ func CopyHeliumFields(gatewayIn *gw.UplinkRxInfo, gatewayOut *types.TtnMapperGat
 	//gatewayOut.LocationAccuracy =
 	gatewayOut.LocationSource = "HELIUM"
 
-	gatewayOut.Name = gatewayIn.Metadata["gateway_name"]
+	gatewayOut.Description = gatewayIn.Metadata["gateway_name"]
 
 	// Copy all metadata fields into attributes
 	for k, v := range gatewayIn.Metadata {
@@ -210,7 +210,7 @@ func CopyThingsIxFields(gatewayIn *gw.UplinkRxInfo, gatewayOut *types.TtnMapperG
 	//gatewayOut.LocationAccuracy =
 	gatewayOut.LocationSource = "THINGSIX"
 
-	//gatewayOut.Name =
+	//gatewayOut.Description =
 
 	// Copy all metadata fields into attributes
 	for k, v := range gatewayIn.Metadata {

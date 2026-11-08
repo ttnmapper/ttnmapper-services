@@ -1,14 +1,21 @@
 package types
 
 const (
-	NS_TTN_V2  = "NS_TTN_V2"
-	NS_TTS_V3  = "NS_TTS_V3"
-	NS_CHIRP   = "NS_CHIRP"
-	NS_HELIUM  = "NS_HELIUM"
-	NS_UNKNOWN = "NS"
+	NS_TTN_V2   = "NS_TTN_V2"
+	NS_TTS_V3   = "NS_TTS_V3"
+	NS_CHIRP    = "NS_CHIRP"
+	NS_HELIUM   = "NS_HELIUM"
+	NS_UNKNOWN  = "NS"
+	NS_THINGSIX = "NS_THINGSIX"
+	MOD_LORA    = "LORA"
+	MOD_FSK     = "FSK"
+	MOD_LRFHSS  = "LR_FHSS"
 )
 
 type TtnMapperUplinkMessage struct {
+	// Legacy producer fields remain optional for wire compatibility.
+	NetworkType    string `json:"network_type,omitempty"`
+	NetworkAddress string `json:"network_address,omitempty"`
 	/*
 		One of the constant network type strings from the above const()
 	*/
@@ -26,7 +33,7 @@ type TtnMapperUplinkMessage struct {
 	DevID  string `json:"dev_id"`
 	DevEui string `json:"dev_eui,omitempty"`
 
-	Time int64 `json:"time,omitempty,omitempty"`
+	Time int64 `json:"time,omitempty"`
 
 	FPort uint8 `json:"port,omitempty"`
 	FCnt  int64 `json:"counter,omitempty"`
@@ -96,8 +103,9 @@ type TtnMapperGateway struct {
 	LocationSource string `json:"location_source,omitempty"`
 
 	// Some sources of statuses provide the description
-	Name       string                 `json:"name,omitempty"`
-	Attributes map[string]interface{} `json:"attributes"`
+	Description string                 `json:"description,omitempty"`
+	Name        string                 `json:"name,omitempty"`
+	Attributes  map[string]interface{} `json:"attributes"`
 }
 
 type TtnMapperGatewayMoved struct {
