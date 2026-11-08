@@ -205,3 +205,17 @@ environment overrides; malformed files/typed values return errors. Tests cover
 precedence, port/bool parsing, missing files, invalid values and legacy key spelling.
 The gonfig/envconfig dependencies are removed. Equivalent formatting/fatal-error
 utilities use `pkg/utils`; ingress-specific validation thresholds remain local.
+
+## Shared RabbitMQ transport
+
+`pkg/queues` now owns connection setup, durable fanout exchange declaration,
+consumer setup, delivery dispatch and JSON publishing. Services explicitly retain
+their queue policies: raw insertion uses a durable/manual-ack queue; status/live
+consumers use non-durable/auto-ack queues; APRS retains its auto-delete policy.
+Prefetch remains 10. Ingress publishing remains persistent; inserted/move messages
+retain their previous delivery mode and `text/plain` content type.
+
+Fake-channel tests verify declaration/binding/acknowledgement flags, setup failure
+short-circuiting, publish properties, credential escaping and closed-channel
+handling. No live RabbitMQ instance was contacted. Service-specific packet parsing,
+processing and failure/restart policy remain at service boundaries.

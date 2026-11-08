@@ -6,10 +6,10 @@ import (
 	"math"
 	"time"
 	"ttnmapper-services/pkg/database"
+	"ttnmapper-services/pkg/queues"
 	"ttnmapper-services/pkg/types"
 	"ttnmapper-services/pkg/utils"
 
-	"github.com/streadway/amqp"
 	"github.com/umahmood/haversine"
 )
 
@@ -232,43 +232,8 @@ func CoordinatesValid(gateway types.TtnMapperGateway) (valid bool, reason string
 }
 
 func publishMovedGateway(gateway types.TtnMapperGatewayMoved) {
-
-	gatewayMovedAmqpConn, err := amqp.Dial("amqp://" + myConfiguration.AmqpUser + ":" + myConfiguration.AmqpPassword + "@" + myConfiguration.AmqpHost + ":" + myConfiguration.AmqpPort + "/")
-	utils.FailOnError(err, "Failed to connect to RabbitMQ")
-	defer gatewayMovedAmqpConn.Close()
-
-	gatewayMovedAmqpChannel, err := gatewayMovedAmqpConn.Channel()
-	utils.FailOnError(err, "Failed to open a channel")
-	defer gatewayMovedAmqpChannel.Close()
-
-	err = gatewayMovedAmqpChannel.ExchangeDeclare(
-		myConfiguration.AmqpExchangeGatewayMoved, // name
-		"fanout",                                 // type
-		true,                                     // durable
-		false,                                    // auto-deleted
-		false,                                    // internal
-		false,                                    // no-wait
-		nil,                                      // arguments
-	)
-	utils.FailOnError(err, "Failed to declare an exchange")
-
-	gatewayJsonData, err := json.Marshal(gateway)
-	if err != nil {
-		log.Println("\t\tCan't marshal gateway to json")
-		return
-	}
-
-	err = gatewayMovedAmqpChannel.Publish(
-		myConfiguration.AmqpExchangeGatewayMoved, // exchange
-		"",                                       // routing key
-		false,                                    // mandatory
-		false,                                    // immediate
-		amqp.Publishing{
-			ContentType: "text/plain",
-			Body:        gatewayJsonData,
-		})
-	utils.FailOnError(err, "Failed to publish a message")
-
-	log.Printf("\tPublished to AMQP exchange")
-	//log.Printf("\t%s", gatewayJsonData)
+	publisher, err := queues.NewPublisher(queues.QueueCredentials{User: myConfiguration.AmqpUser, Password: myConfiguration.AmqpPassword, Host: myConfiguration.AmqpHost, Port: myConfiguration.AmqpPort}, myConfiguration.AmqpExchangeGatewayMoved)
+	utils.FailOnError(err, "Connect publisher")
+	defer publisher.Close()
+	utils.FailOnError(publisher.PublishJSON(gateway, 0), "Publish gateway move")
 }

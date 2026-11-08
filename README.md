@@ -43,7 +43,7 @@ runner also discovers Debian-style installations. No Docker dependency is needed
 The script creates a fresh cluster under `/tmp`, disables TCP, uses a private Unix
 socket, and removes the cluster on exit. It accepts no existing server DSN and does
 not use the production `POSTGRES_*` settings. Tests have the `integration` build tag
-and are excluded from the ordinary six-module suite. Test selection flags such as
+and are excluded from the ordinary unit suite. Test selection flags such as
 `-run TestRebuild` can be passed to the script.
 
 The suite migrates the current Go models and verifies insertion, lookup reuse,
@@ -71,16 +71,16 @@ examples and the imported build manifests, not separate Go projects.
 
 | Service | Source directory | Dockerfile |
 | --- | --- | --- |
-| postgres-insert-raw | `cmd/insert-raw` / repository root | `Dockerfile.insert-raw` |
-| aggregate | `cmd/aggregate` / repository root | `Dockerfile.aggregate` |
-| gateway-update | `cmd/gateway-update` / repository root | `Dockerfile.gateway-update` |
-| gateway-bbox | `cmd/gateway-boundingbox` / repository root | `Dockerfile.gateway-bbox` |
-| website-api | `cmd/website-api` / repository root | `Dockerfile.website-api` |
+| postgres-insert-raw | `cmd/insert-raw` | `Dockerfile.insert-raw` |
+| aggregate | `cmd/aggregate` | `Dockerfile.aggregate` |
+| gateway-update | `cmd/gateway-update` | `Dockerfile.gateway-update` |
+| gateway-bbox | `cmd/gateway-boundingbox` | `Dockerfile.gateway-bbox` |
+| website-api | `cmd/website-api` | `Dockerfile.website-api` |
 | websockets-live | `cmd/websockets-live` | `Dockerfile.websockets-live` |
 | gateway-channels | `cmd/gateway-channels` | `Dockerfile.gateway-channels` |
 | ttn-to-aprs-bridge | `cmd/ttn-to-aprs-bridge` | `Dockerfile.ttn-to-aprs-bridge` |
 | ingress-api | `cmd/ingress-api` | `Dockerfile.ingress-api` |
-| tile-map-server | `services/tile-map-server` | `Dockerfile.tilemapserver` |
+| tile-map-server | `cmd/tile-map-server` | `Dockerfile.tilemapserver` |
 
 The consolidation was merged into `master`. The tile server includes
 the working changes from its original `simulated-coverage` branch, including

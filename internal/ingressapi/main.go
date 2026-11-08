@@ -1,13 +1,13 @@
 package ingressapi
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/streadway/amqp"
 	"log"
 	"net/http"
 	"ttnmapper-services/internal/ingressapi/types"
 	"ttnmapper-services/pkg/config"
+	"ttnmapper-services/pkg/queues"
 	sharedutil "ttnmapper-services/pkg/utils"
 )
 import "github.com/go-chi/chi"
@@ -60,49 +60,11 @@ func Run() {
 }
 
 func publishFromChannel() {
-	conn, err := amqp.Dial("amqp://" + myConfiguration.AmqpUser + ":" + myConfiguration.AmqpPassword + "@" + myConfiguration.AmqpHost + ":" + myConfiguration.AmqpPort + "/")
-	//if err != nil {
-	//	log.Print("Error connecting to RabbitMQ")
-	//	return
-	//}
-	sharedutil.FailOnError(err, "Failed to connect to RabbitMQ")
-	defer conn.Close()
-
-	ch, err := conn.Channel()
-	sharedutil.FailOnError(err, "Failed to open a channel")
-	defer ch.Close()
-
-	err = ch.ExchangeDeclare(
-		"new_packets", // name
-		"fanout",      // type
-		true,          // durable
-		false,         // auto-deleted
-		false,         // internal
-		false,         // no-wait
-		nil,           // arguments
-	)
-
-	//var message map[string]interface{}
-	for {
-		message := <-publishChannel
-		log.Printf("Publishing message")
-
-		data, err := json.Marshal(message)
-		if err != nil {
-			fmt.Printf("marshal failed: %s", err)
-			continue
-		}
-
-		err = ch.Publish(
-			"new_packets", // exchange
-			"",            // routing key
-			false,         // mandatory
-			false,         // immediate
-			amqp.Publishing{
-				DeliveryMode: amqp.Persistent,
-				ContentType:  "text/plain",
-				Body:         []byte(data),
-			})
-		sharedutil.FailOnError(err, "Failed to publish a message")
+	publisher, err := queues.NewPublisher(queues.QueueCredentials{User: myConfiguration.AmqpUser, Password: myConfiguration.AmqpPassword, Host: myConfiguration.AmqpHost, Port: myConfiguration.AmqpPort}, "new_packets")
+	sharedutil.FailOnError(err, "Connect publisher")
+	defer publisher.Close()
+	for message := range publishChannel {
+		sharedutil.FailOnError(publisher.PublishJSON(message, amqp.Persistent), "Publish raw packet")
 	}
+	log.Fatal("Publish channel closed")
 }
