@@ -179,16 +179,17 @@ func GetAllOldNamingTtnV2Antennas() []Antenna {
 }
 
 func FindAntenna(networkId string, gatewayId string, antennaIndex uint8) Antenna {
-	var antenna Antenna
-	antennaIndexer := AntennaIndexer{NetworkId: networkId, GatewayId: gatewayId, AntennaIndex: antennaIndex}
-
-	i, ok := antennaDbCache.Load(antennaIndexer)
-	if ok {
-		antenna = i.(Antenna)
-	} else {
-		antenna = Antenna{NetworkId: networkId, GatewayId: gatewayId, AntennaIndex: antennaIndex}
-		Db.FirstOrCreate(&antenna, &antenna)
+	index := AntennaIndexer{NetworkId: networkId, GatewayId: gatewayId, AntennaIndex: antennaIndex}
+	antenna := Antenna{NetworkId: networkId, GatewayId: gatewayId, AntennaIndex: antennaIndex}
+	if cached, ok := antennaDbCache.Load(index); ok {
+		antenna.ID = cached.(uint)
+		return antenna
 	}
+	if err := Db.FirstOrCreate(&antenna, &antenna).Error; err != nil {
+		log.Print(err)
+		return Antenna{}
+	}
+	antennaDbCache.Store(index, antenna.ID)
 	return antenna
 }
 

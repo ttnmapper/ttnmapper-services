@@ -29,3 +29,16 @@ func TestOnlineGatewaysCacheSeparatesNetworks(t *testing.T) {
 		}
 	}
 }
+
+func TestFindAntennaUsesPacketConverterCacheFormat(t *testing.T) {
+	old := Db
+	Db = nil
+	t.Cleanup(func() { Db = old })
+	index := AntennaIndexer{NetworkId: t.Name(), GatewayId: "gateway", AntennaIndex: 2}
+	antennaDbCache.Store(index, uint(42))
+	t.Cleanup(func() { antennaDbCache.Delete(index) })
+	got := FindAntenna(index.NetworkId, index.GatewayId, index.AntennaIndex)
+	if got.ID != 42 || got.NetworkId != index.NetworkId || got.GatewayId != index.GatewayId || got.AntennaIndex != 2 {
+		t.Fatalf("cached antenna=%+v", got)
+	}
+}
