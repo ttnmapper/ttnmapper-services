@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"math"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -250,8 +250,12 @@ func TestRebuildAfterGatewayMove(t *testing.T) {
 		t.Fatal(err)
 	}
 	for attempt := 0; attempt < 2; attempt++ {
-		grid_cell.ReprocessAntenna(f.antenna, f.cutoff)
-		radar_beam.ReprocessAntenna(f.antenna, f.cutoff)
+		if err := grid_cell.ReprocessAntenna(f.antenna, f.cutoff); err != nil {
+			t.Fatal(err)
+		}
+		if err := radar_beam.ReprocessAntenna(f.antenna, f.cutoff); err != nil {
+			t.Fatal(err)
+		}
 		cells := database.GetGridcellsForAntenna(f.antenna)
 		beams := database.GetRadarBeamsForAntenna(f.antenna)
 		if len(cells) != 1 || cells[0].Bucket105 != 2 || cells[0].BucketHigh != 0 || !cells[0].LastUpdated.Equal(f.cutoff.Add(2*time.Second)) {
@@ -264,58 +268,133 @@ func TestRebuildAfterGatewayMove(t *testing.T) {
 	}
 }
 
-// The current rebuild functions call log.Fatal on failed bulk insertion. Exercise
-// them in a child process so the parent can inspect the database after the exit.
-func TestRebuildFailureChild(t *testing.T) {
-	kind := os.Getenv("TTNMAPPER_REBUILD_FAILURE")
-	if kind == "" {
-		t.Skip("subprocess helper")
+func TestRebuildFailuresPreserveOldAggregates(t *testing.T) {
+	for _, kind := range []string{"grid", "radar"} {
+		t.Run(kind, func(t *testing.T) {
+			for _, stage := range []string{"read", "delete", "insert", "commit"} {
+				t.Run(stage, func(t *testing.T) {
+					f := seedReplay(t, t.Name())
+					oldCells := database.GetGridcellsForAntenna(f.antenna)
+					oldBeams := database.GetRadarBeamsForAntenna(f.antenna)
+					rebuild := grid_cell.ReprocessAntenna
+					table := "grid_cells"
+					if kind == "radar" {
+						rebuild = radar_beam.ReprocessAntenna
+						table = "radar_beams"
+					}
+					var restore func()
+					if stage == "read" {
+						mustExec(t, `ALTER TABLE packets RENAME TO packets_unavailable`)
+						restore = func() { mustExec(t, `ALTER TABLE packets_unavailable RENAME TO packets`) }
+					} else {
+						mustExec(t, `CREATE FUNCTION reject_rebuild() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected rebuild failure'; END $$`)
+						trigger := fmt.Sprintf(`CREATE TRIGGER reject_rebuild BEFORE INSERT ON %s FOR EACH ROW EXECUTE FUNCTION reject_rebuild()`, table)
+						if stage == "delete" {
+							trigger = fmt.Sprintf(`CREATE TRIGGER reject_rebuild BEFORE DELETE ON %s FOR EACH ROW EXECUTE FUNCTION reject_rebuild()`, table)
+						}
+						if stage == "commit" {
+							trigger = fmt.Sprintf(`CREATE CONSTRAINT TRIGGER reject_rebuild AFTER INSERT ON %s DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION reject_rebuild()`, table)
+						}
+						mustExec(t, trigger)
+						restore = func() {
+							mustExec(t, fmt.Sprintf(`DROP TRIGGER reject_rebuild ON %s`, table))
+							mustExec(t, `DROP FUNCTION reject_rebuild()`)
+						}
+					}
+					active := true
+					t.Cleanup(func() {
+						if active {
+							restore()
+						}
+					})
+					err := rebuild(f.antenna, f.cutoff)
+					if err == nil {
+						t.Fatal("failed rebuild returned no error")
+					}
+					if stage != "read" && sqlState(err) != "P0001" {
+						t.Fatalf("injected error=%v", err)
+					}
+					if !reflect.DeepEqual(oldCells, database.GetGridcellsForAntenna(f.antenna)) || !reflect.DeepEqual(oldBeams, database.GetRadarBeamsForAntenna(f.antenna)) {
+						t.Fatal("failed rebuild changed old aggregates")
+					}
+					assertOtherAntenna(t, f)
+					restore()
+					active = false
+					// A retry in the same process must not reuse partial replay counts/IDs.
+					if err := rebuild(f.antenna, f.cutoff); err != nil {
+						t.Fatal(err)
+					}
+					if kind == "grid" {
+						cells := database.GetGridcellsForAntenna(f.antenna)
+						if len(cells) != 1 || cells[0].Bucket105 != 2 || cells[0].BucketHigh != 0 {
+							t.Fatalf("retry cells=%+v", cells)
+						}
+					} else {
+						beams := database.GetRadarBeamsForAntenna(f.antenna)
+						if len(beams) != 1 || beams[0].Samples != 2 || beams[0].Bearing != 0 {
+							t.Fatalf("retry beams=%+v", beams)
+						}
+					}
+				})
+			}
+		})
 	}
-	var antenna database.Antenna
-	if err := database.Db.Where("network_id = ? AND antenna_index = 0", os.Getenv("TTNMAPPER_REBUILD_NETWORK")).First(&antenna).Error; err != nil {
+}
+
+func TestEmptyRebuildClearsOnlyTargetAntenna(t *testing.T) {
+	f := seedReplay(t, t.Name())
+	cutoff := f.cutoff.Add(time.Hour)
+	if err := grid_cell.ReprocessAntenna(f.antenna, cutoff); err != nil {
 		t.Fatal(err)
 	}
-	cutoff := time.Date(2026, 11, 8, 10, 0, 0, 0, time.UTC)
-	switch kind {
-	case "grid":
-		grid_cell.ReprocessAntenna(antenna, cutoff)
-	case "radar":
-		radar_beam.ReprocessAntenna(antenna, cutoff)
-	default:
-		t.Fatal("unknown failure kind")
+	if err := radar_beam.ReprocessAntenna(f.antenna, cutoff); err != nil {
+		t.Fatal(err)
 	}
-	t.Fatal("injected rebuild write unexpectedly succeeded")
+	if len(database.GetGridcellsForAntenna(f.antenna)) != 0 || len(database.GetRadarBeamsForAntenna(f.antenna)) != 0 {
+		t.Fatal("successful empty rebuild retained old rows")
+	}
+	assertOtherAntenna(t, f)
 }
-func TestRebuildWriteFailureLosesOldAggregates(t *testing.T) {
+
+// The production batch size is 1000. A failure in a later batch must roll back
+// the delete and every earlier batch, not merely the final INSERT statement.
+func TestReplacementRollsBackEarlierBatches(t *testing.T) {
 	for _, kind := range []string{"grid", "radar"} {
 		t.Run(kind, func(t *testing.T) {
 			f := seedReplay(t, t.Name())
-			table := "grid_cells"
+			table, column := "grid_cells", "x"
 			if kind == "radar" {
-				table = "radar_beams"
+				table, column = "radar_beams", "bearing"
 			}
-			mustExec(t, `CREATE FUNCTION reject_rebuild() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'injected rebuild failure'; END $$`)
-			mustExec(t, fmt.Sprintf(`CREATE TRIGGER reject_rebuild BEFORE INSERT ON %s FOR EACH ROW EXECUTE FUNCTION reject_rebuild()`, table))
+			oldCells := database.GetGridcellsForAntenna(f.antenna)
+			oldBeams := database.GetRadarBeamsForAntenna(f.antenna)
+			mustExec(t, fmt.Sprintf(`CREATE FUNCTION reject_late_batch() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.%s = 1001 THEN RAISE EXCEPTION 'injected late batch failure'; END IF; RETURN NEW; END $$`, column))
+			mustExec(t, fmt.Sprintf(`CREATE TRIGGER reject_late_batch BEFORE INSERT ON %s FOR EACH ROW EXECUTE FUNCTION reject_late_batch()`, table))
 			t.Cleanup(func() {
-				mustExec(t, fmt.Sprintf(`DROP TRIGGER reject_rebuild ON %s`, table))
-				mustExec(t, `DROP FUNCTION reject_rebuild()`)
+				mustExec(t, fmt.Sprintf(`DROP TRIGGER reject_late_batch ON %s`, table))
+				mustExec(t, `DROP FUNCTION reject_late_batch()`)
 			})
-			cmd := exec.Command(os.Args[0], "-test.run=^TestRebuildFailureChild$", "-test.v")
-			cmd.Env = append(os.Environ(), "TTNMAPPER_REBUILD_FAILURE="+kind, "TTNMAPPER_REBUILD_NETWORK="+f.antenna.NetworkId)
-			output, err := cmd.CombinedOutput()
-			var exit *exec.ExitError
-			if !errors.As(err, &exit) || exit.ExitCode() != 1 || !strings.Contains(string(output), "injected rebuild failure") {
-				t.Fatalf("child error=%v output=%s", err, output)
+			var err error
+			if kind == "grid" {
+				cells := make([]database.GridCell, 1002)
+				for i := range cells {
+					cells[i] = database.GridCell{AntennaID: f.antenna.ID, X: i, Y: 1, Bucket105: 1}
+				}
+				err = database.ReplaceGridCellsForAntenna(f.antenna.ID, cells)
+			} else {
+				beams := make([]database.RadarBeam, 1002)
+				for i := range beams {
+					beams[i] = database.RadarBeam{AntennaID: f.antenna.ID, Level: -105, Bearing: uint(i), Samples: 1}
+				}
+				err = database.ReplaceRadarBeamsForAntenna(f.antenna.ID, beams)
 			}
-			var count int64
-			if err := database.Db.Table(table).Where("antenna_id = ?", f.antenna.ID).Count(&count).Error; err != nil {
-				t.Fatal(err)
+			if sqlState(err) != "P0001" {
+				t.Fatalf("batch failure=%v", err)
 			}
-			if count != 0 {
-				t.Fatalf("expected current delete-before-insert behavior to leave zero rows; got %d", count)
+			if !reflect.DeepEqual(oldCells, database.GetGridcellsForAntenna(f.antenna)) || !reflect.DeepEqual(oldBeams, database.GetRadarBeamsForAntenna(f.antenna)) {
+				t.Fatal("earlier batches or deletion were committed")
 			}
 			assertOtherAntenna(t, f)
-			t.Log("Current behavior: old aggregates are deleted before the failing replacement insert; transactional replacement is needed")
 		})
 	}
 }
@@ -373,4 +452,35 @@ func TestNullableAndExperimentFields(t *testing.T) {
 	if experiment.Name != msg.Experiment || got.GatewayTime != nil || got.Timestamp != nil || got.SignalRssi != nil || got.AccuracyMeters != nil || got.Hdop != nil || got.Satellites != nil || got.FineTimestamp != nil || got.FineTimestampEncrypted != nil || got.FineTimestampKeyID != nil {
 		t.Fatalf("nullable/experiment fields=%+v", got)
 	}
+}
+
+func TestLiveUpdateUsesCommittedRebuildIDs(t *testing.T) {
+	f := seedReplay(t, t.Name())
+	if err := grid_cell.ReprocessAntenna(f.antenna, f.cutoff); err != nil {
+		t.Fatal(err)
+	}
+	if err := radar_beam.ReprocessAntenna(f.antenna, f.cutoff); err != nil {
+		t.Fatal(err)
+	}
+	cells := database.GetGridcellsForAntenna(f.antenna)
+	beams := database.GetRadarBeamsForAntenna(f.antenna)
+	if len(cells) != 1 || len(beams) != 1 {
+		t.Fatal("missing rebuilt aggregates")
+	}
+	cellID, beamID := cells[0].ID, beams[0].ID
+	msg, gw := message(f.antenna.NetworkId, f.cutoff.Add(5*time.Second))
+	msg.Latitude = 2
+	msg.Longitude = 1
+	msg.Gateways = []types.TtnMapperGateway{gw}
+	grid_cell.AggregateNewData(msg)
+	radar_beam.AggregateNewData(msg)
+	cells = database.GetGridcellsForAntenna(f.antenna)
+	beams = database.GetRadarBeamsForAntenna(f.antenna)
+	if len(cells) != 1 || cells[0].ID != cellID || cells[0].Bucket105 != 3 {
+		t.Fatalf("post-rebuild live cells=%+v", cells)
+	}
+	if len(beams) != 1 || beams[0].ID != beamID || beams[0].Samples != 3 {
+		t.Fatalf("post-rebuild live beams=%+v", beams)
+	}
+	assertOtherAntenna(t, f)
 }

@@ -69,96 +69,76 @@ func AggregateMovedGateway(movedGateway types.TtnMapperGatewayMoved) {
 	antennas := database.GetAntennaForGateway(movedGateway.NetworkId, movedGateway.GatewayId)
 
 	for _, antenna := range antennas {
-		ReprocessAntenna(antenna, movedTime)
+		if err := ReprocessAntenna(antenna, movedTime); err != nil {
+			log.Print(err)
+			return
+		}
 	}
 }
 
-func ReprocessAntenna(antenna database.Antenna, installedAtLocation time.Time) {
-
-	// Get the gateway this antenna belongs to
-	gatewayIndexer := database.GatewayIndexer{
-		NetworkId: antenna.NetworkId,
-		GatewayId: antenna.GatewayId,
-	}
-	gateway, err := database.GetGateway(gatewayIndexer)
+// ReprocessAntenna builds in local memory and replaces rows transactionally.
+// Neither replay errors nor failed commits change the live cache.
+func ReprocessAntenna(antenna database.Antenna, installedAtLocation time.Time) error {
+	gateway, err := database.GetGateway(database.GatewayIndexer{NetworkId: antenna.NetworkId, GatewayId: antenna.GatewayId})
 	if err != nil {
-		log.Println(err.Error())
-		return
+		return fmt.Errorf("load gateway for replay: %w", err)
 	}
-
-	// Get a list of beams to delete
-	radarBeams := database.GetRadarBeamsForAntenna(antenna)
-
-	// Remove from local cache
-	for _, radarBeam := range radarBeams {
-		radarBeamIndexer := database.RadarBeamIndexer{AntennaID: radarBeam.AntennaID, Level: radarBeam.Level, Bearing: radarBeam.Bearing}
-		radarBeamDbCache.Delete(radarBeamIndexer)
+	if gateway.Latitude == 0 && gateway.Longitude == 0 {
+		return fmt.Errorf("gateway location unknown")
 	}
-
-	gatewayRadarBeams := map[database.RadarBeamIndexer]database.RadarBeam{}
-
-	// Get all existing packets since gateway last moved
 	rows, err := database.GetPacketsForAntennaAfter(antenna, installedAtLocation)
 	if err != nil {
-		log.Println(err.Error())
-		return
+		return fmt.Errorf("read replay packets: %w", err)
 	}
-
-	i := 0
+	defer rows.Close()
+	rebuilt := map[database.RadarBeamIndexer]database.RadarBeam{}
 	for rows.Next() {
-		i++
-		fmt.Printf("\rPacket %d   ", i)
-
 		var packet database.Packet
-		err := database.ScanRows(rows, &packet)
-		if err != nil {
-			log.Println(err.Error())
+		if err := database.ScanRows(rows, &packet); err != nil {
+			return fmt.Errorf("scan replay packet: %w", err)
+		}
+		distance := utils2.GetDistanceDatabase(gateway, packet)
+		if !utils2.CheckDistance(distance) {
 			continue
 		}
-
-		// If the point is too far from the gateway, ignore it
-		if !utils2.CheckDistanceFromAntenna(antenna, packet) {
-			log.Println("too far away", packet.ID)
-			continue
-		}
-
 		level := getLevelFromPacket(packet)
 		bearing := utils2.GetBearingDatabase(gateway, packet)
-		distance := utils2.GetDistanceDatabase(gateway, packet) * 1000.0 // km to metres
-
-		radarBeam, err := getRadarBeamNotDb(antenna.ID, level, bearing)
-		if err != nil {
-			log.Println(err.Error())
-			continue
+		key := database.RadarBeamIndexer{AntennaID: antenna.ID, Level: level, Bearing: bearing}
+		beam, ok := rebuilt[key]
+		if !ok {
+			beam = database.RadarBeam{AntennaID: antenna.ID, Level: level, Bearing: bearing}
 		}
-		incrementRadarBeam(&radarBeam, packet.Time, distance)
-		storeRadarBeamInCache(radarBeam) // so that we don't read it again from the database
-
-		// Also store in a map to write to the database later
-		radarBeamIndexer := database.RadarBeamIndexer{AntennaID: radarBeam.AntennaID, Level: radarBeam.Level, Bearing: radarBeam.Bearing}
-		gatewayRadarBeams[radarBeamIndexer] = radarBeam
+		incrementRadarBeam(&beam, packet.Time, distance*1000)
+		rebuilt[key] = beam
 	}
-	err = rows.Close()
-	if err != nil {
-		log.Println(err.Error())
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate replay packets: %w", err)
 	}
-
-	// Delete old cells from database
-	database.DeleteRadarBeamsForAntenna(antenna)
-
-	if len(gatewayRadarBeams) == 0 {
-		log.Println("No packets")
-		return
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close replay packets: %w", err)
 	}
-	fmt.Println()
-
-	// Then add new ones
-	log.Printf("Result is %d radar beams", len(gatewayRadarBeams))
-	err = storeRadarBeamsInDb(gatewayRadarBeams)
-	if err != nil {
-		log.Fatalf(err.Error())
+	entries := make([]database.RadarBeam, 0, len(rebuilt))
+	for _, entry := range rebuilt {
+		entries = append(entries, entry)
 	}
+	return replaceRebuilt(antenna.ID, entries, database.ReplaceRadarBeamsForAntenna)
+}
 
+// Publish the replacement cache only after the database commit succeeds.
+func replaceRebuilt(antennaID uint, entries []database.RadarBeam, replace func(uint, []database.RadarBeam) error) error {
+	if err := replace(antennaID, entries); err != nil {
+		return fmt.Errorf("replace rebuilt aggregates: %w", err)
+	}
+	radarBeamDbCache.Range(func(key, value interface{}) bool {
+		if key.(database.RadarBeamIndexer).AntennaID == antennaID {
+			radarBeamDbCache.Delete(key)
+		}
+		return true
+	})
+	for _, entry := range entries {
+		storeRadarBeamInCache(entry)
+	}
+	return nil
 }
 
 func getLevelFromPacket(packet database.Packet) int {
@@ -225,20 +205,6 @@ func getRadarBeamNotDb(antennaId uint, level int, bearing uint) (database.RadarB
 		radarBeam.Bearing = bearing
 	}
 	return radarBeam, nil
-}
-
-func storeRadarBeamsInDb(radarBeams map[database.RadarBeamIndexer]database.RadarBeam) error {
-	if len(radarBeams) == 0 {
-		log.Println("No radar beams to insert")
-		return nil
-	}
-
-	radarBeamSlice := make([]database.RadarBeam, 0)
-	for _, val := range radarBeams {
-		radarBeamSlice = append(radarBeamSlice, val)
-	}
-
-	return database.CreateRadarBeams(radarBeamSlice)
 }
 
 func incrementRadarBeam(radarBeam *database.RadarBeam, entryTime time.Time, distance float64) {

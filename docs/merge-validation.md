@@ -46,9 +46,9 @@ On 7 November 2026, the remaining live-system checks were replaced or removed:
   caches are updated only after successful saves. Save errors are surfaced by the
   database helpers and logged by the live aggregators.
 - Aggregate command tests verify experiment filtering and moved-gateway routing to
-  all antennas with the database's last-move cutoff. Actual database replay,
-  delete/rebuild atomicity and RabbitMQ acknowledgement/redelivery still require
-  integration coverage. The affected unit suites also pass with the race detector.
+  all antennas with the database's last-move cutoff. Database replay and replacement
+  atomicity are now covered by the opt-in PostgreSQL suite described below;
+  RabbitMQ acknowledgement/redelivery still requires integration coverage. The affected unit suites also pass with the race detector.
 - Gateway-channels tests cover malformed and empty packets, gateway normalization,
   repeated reception counts, identity-separated caches and failures at each storage
   step. Frequency results now populate the frequency cache; association write errors
@@ -86,15 +86,28 @@ Verified production database helpers against schemas migrated from current model
   Grid/radar rebuilding applies distance filtering, produces known counts and
   geometry, preserves other antennas and produces the same result on a second run.
 - Injected packet insertion failure leaves earlier rows committed.
-- Injected grid/radar replacement failure exits the existing rebuild worker after
-  deleting the old aggregates, leaving zero rows for that antenna. Child processes
-  allow the parent test to inspect this state after the worker's fatal exit.
+- Grid/radar rebuilding now preserves previous aggregates on read, delete,
+  insertion and commit errors. A failed later batch rolls back both earlier batches
+  and deletion. Retrying in the same process produces the correct aggregate counts.
+- Successful empty rebuilds remove only the target antenna's aggregates. Unit tests
+  verify that cache replacement waits for commit and preserves other antennas.
+  A subsequent live update reuses the committed row IDs and increments the rebuilt
+  counts without resurrecting old rows. This regression also exposed and fixed the
+  shared antenna cache: lookup now reads the same uint ID format as packet conversion.
 
-The last two checks deliberately characterize current failure behavior. Transactional
-replacement of aggregates is the highest-priority follow-up; packet delivery-wide
-transactions/idempotency also need a decision. No production database, deployment
-or RabbitMQ service was contacted. The suite does not prove recovery under concurrent
-live aggregation or compatibility with an existing production schema.
+The original integration suite demonstrated aggregate loss on failed replacement.
+That behavior has been fixed: replay builds local state, checks scan/iteration/close
+errors, and atomically replaces rows per antenna and aggregate type. Errors are
+returned and logged by callers instead of terminating the process. Failed rebuilds
+leave the existing cache untouched; successful commits replace only that antenna's
+cached rows, including the newly assigned database IDs.
+
+Grid and radar use separate transactions. This does not serialize concurrent live
+writers in other processes or provide a single transaction across both aggregate
+types. Packet delivery-wide transactions/idempotency remain follow-up work. No
+production database, deployment or RabbitMQ service was contacted. The suite does
+not prove recovery under concurrent live aggregation or compatibility with an
+existing production schema.
 
 ## Small baseline repairs
 

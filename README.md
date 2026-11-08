@@ -46,10 +46,15 @@ and are excluded from the ordinary six-module suite. Test selection flags such a
 
 The suite migrates the current Go models and verifies insertion, lookup reuse,
 foreign keys, numeric/nullable storage, and replay of non-experiment packets strictly
-after a gateway move. Failure injection currently documents two limitations:
-earlier packet rows survive a later insert failure, and rebuilds lose old aggregates
-if their replacement insert fails. These are characterization tests, not transaction
-or exactly-once guarantees. They do not validate an existing production schema or
+after a gateway move. Rebuild failure tests require the previous aggregates to
+survive read, delete, insertion, commit and later-batch failures; retries must produce
+the correct counts. Successful empty rebuilds clear only the target antenna.
+
+Grid and radar replacement each use a transaction per antenna, with cache changes
+published only after commit. They are separate transactions, and concurrent live
+writers in other processes are not serialized by this change. Earlier packet rows
+still survive a later raw insertion failure; delivery-wide transactions/idempotency
+remain separate work. The suite does not validate an existing production schema or
 exercise RabbitMQ acknowledgement/redelivery.
 
 ## Services

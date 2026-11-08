@@ -1,6 +1,7 @@
 package aggregations
 
 import (
+	"log"
 	"time"
 	"ttnmapper-services/pkg/aggregations/grid_cell"
 	"ttnmapper-services/pkg/aggregations/radar_beam"
@@ -19,6 +20,11 @@ func AggregateMovedGateway(message types.TtnMapperGatewayMoved) {
 }
 
 func ReprocessAntenna(antenna database.Antenna, movedTime time.Time) {
-	grid_cell.ReprocessAntenna(antenna, movedTime)
-	radar_beam.ReprocessAntenna(antenna, movedTime)
+	if err := grid_cell.ReprocessAntenna(antenna, movedTime); err != nil {
+		log.Print(err)
+		return
+	}
+	if err := radar_beam.ReprocessAntenna(antenna, movedTime); err != nil {
+		log.Print(err)
+	}
 }

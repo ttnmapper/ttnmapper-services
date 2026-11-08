@@ -66,78 +66,77 @@ func AggregateMovedGateway(movedGateway types.TtnMapperGatewayMoved) {
 	antennas := database.GetAntennaForGateway(movedGateway.NetworkId, movedGateway.GatewayId)
 
 	for _, antenna := range antennas {
-		ReprocessAntenna(antenna, movedTime)
+		if err := ReprocessAntenna(antenna, movedTime); err != nil {
+			log.Print(err)
+			return
+		}
 	}
 }
 
-func ReprocessAntenna(antenna database.Antenna, installedAtLocation time.Time) {
-	// Get a list of grid cells to delete
-	gridCells := database.GetGridcellsForAntenna(antenna)
-
-	// Remove from local cache
-	for _, gridCell := range gridCells {
-		gridCellIndexer := database.GridCellIndexer{AntennaID: gridCell.AntennaID, X: gridCell.X, Y: gridCell.Y}
-		gridCellDbCache.Delete(gridCellIndexer)
+// ReprocessAntenna builds in local memory and replaces rows transactionally.
+// Neither replay errors nor failed commits change the live cache.
+func ReprocessAntenna(antenna database.Antenna, installedAtLocation time.Time) error {
+	gateway, err := database.GetGateway(database.GatewayIndexer{NetworkId: antenna.NetworkId, GatewayId: antenna.GatewayId})
+	if err != nil {
+		return fmt.Errorf("load gateway for replay: %w", err)
 	}
-
-	gatewayGridCells := map[database.GridCellIndexer]database.GridCell{}
-
-	// Get all existing packets since gateway last moved
+	if gateway.Latitude == 0 && gateway.Longitude == 0 {
+		return fmt.Errorf("gateway location unknown")
+	}
 	rows, err := database.GetPacketsForAntennaAfter(antenna, installedAtLocation)
 	if err != nil {
-		log.Println(err.Error())
-		return
+		return fmt.Errorf("read replay packets: %w", err)
 	}
-
-	i := 0
+	defer rows.Close()
+	rebuilt := map[database.GridCellIndexer]database.GridCell{}
 	for rows.Next() {
-		i++
-		fmt.Printf("\rPacket %d   ", i)
-
 		var packet database.Packet
-		err := database.ScanRows(rows, &packet)
-		if err != nil {
-			log.Println(err.Error())
+		if err := database.ScanRows(rows, &packet); err != nil {
+			return fmt.Errorf("scan replay packet: %w", err)
+		}
+		distance := utils2.GetDistanceDatabase(gateway, packet)
+		if !utils2.CheckDistance(distance) {
 			continue
 		}
-
-		// If the point is too far from the gateway, ignore it
-		if !utils2.CheckDistanceFromAntenna(antenna, packet) {
-			continue
-		}
-
-		gridCell, err := getGridCellNotDb(antenna.ID, packet.Latitude, packet.Longitude) // Do not create now as we will do a batch insert later
+		cell, err := newGridCell(antenna.ID, packet.Latitude, packet.Longitude)
 		if err != nil {
 			continue
 		}
-		incrementBucket(&gridCell, packet.Time, packet.Rssi, packet.Snr)
-		storeGridCellInCache(gridCell) // so that we don't read it again from the database
-
-		// Also store in a map of gridcells we will write to the database later
-		gridCellIndexer := database.GridCellIndexer{AntennaID: gridCell.AntennaID, X: gridCell.X, Y: gridCell.Y}
-		gatewayGridCells[gridCellIndexer] = gridCell
+		key := database.GridCellIndexer{AntennaID: antenna.ID, X: cell.X, Y: cell.Y}
+		if previous, ok := rebuilt[key]; ok {
+			cell = previous
+		}
+		incrementBucket(&cell, packet.Time, packet.Rssi, packet.Snr)
+		rebuilt[key] = cell
 	}
-	err = rows.Close()
-	if err != nil {
-		log.Println(err.Error())
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("iterate replay packets: %w", err)
 	}
-
-	// Delete old cells from database
-	database.DeleteGridCellsForAntenna(antenna)
-
-	if len(gatewayGridCells) == 0 {
-		log.Println("No packets")
-		return
+	if err := rows.Close(); err != nil {
+		return fmt.Errorf("close replay packets: %w", err)
 	}
-	fmt.Println()
-
-	// Then add new ones
-	log.Printf("Result is %d grid cells", len(gatewayGridCells))
-	// todo upsert as the other process could have added cells in the meantime
-	err = storeGridCellsInDb(gatewayGridCells)
-	if err != nil {
-		log.Fatalf(err.Error())
+	entries := make([]database.GridCell, 0, len(rebuilt))
+	for _, entry := range rebuilt {
+		entries = append(entries, entry)
 	}
+	return replaceRebuilt(antenna.ID, entries, database.ReplaceGridCellsForAntenna)
+}
+
+// Publish the replacement cache only after the database commit succeeds.
+func replaceRebuilt(antennaID uint, entries []database.GridCell, replace func(uint, []database.GridCell) error) error {
+	if err := replace(antennaID, entries); err != nil {
+		return fmt.Errorf("replace rebuilt aggregates: %w", err)
+	}
+	gridCellDbCache.Range(func(key, value interface{}) bool {
+		if key.(database.GridCellIndexer).AntennaID == antennaID {
+			gridCellDbCache.Delete(key)
+		}
+		return true
+	})
+	for _, entry := range entries {
+		storeGridCellInCache(entry)
+	}
+	return nil
 }
 
 func getGridCell(antennaId uint, latitude float64, longitude float64) (database.GridCell, error) {
@@ -172,34 +171,26 @@ func getGridCell(antennaId uint, latitude float64, longitude float64) (database.
 	return gridCellDb, nil
 }
 
-func getGridCellNotDb(antennaId uint, latitude float64, longitude float64) (database.GridCell, error) {
-	// https://blog.jochentopf.com/2013-02-04-antarctica-in-openstreetmap.html
-	// The Mercator projection generally used in online maps only covers the area between about 85.0511 degrees South and 85.0511 degrees North.
+func newGridCell(antennaID uint, latitude, longitude float64) (database.GridCell, error) {
 	if latitude < -85 || latitude > 85 {
-		// We get a tile index that is invalid if we try handling -90,-180
 		return database.GridCell{}, errors.New("coordinates out of range")
 	}
 	if latitude == 0 && longitude == 0 {
-		// We get a tile index that is invalid if we try handling -90,-180
 		return database.GridCell{}, errors.New("null island")
 	}
-
 	tile := gosm.NewTileWithLatLong(latitude, longitude, 19)
+	return database.GridCell{AntennaID: antennaID, X: tile.X, Y: tile.Y}, nil
+}
 
-	gridCell := database.GridCell{}
-
-	// Try and find in cache
-	gridCellIndexer := database.GridCellIndexer{AntennaID: antennaId, X: tile.X, Y: tile.Y}
-	i, ok := gridCellDbCache.Load(gridCellIndexer)
-	if ok {
-		gridCell = i.(database.GridCell)
-		//log.Print("Found grid cell in cache")
-	} else {
-		gridCell.AntennaID = antennaId
-		gridCell.X = tile.X
-		gridCell.Y = tile.Y
+func getGridCellNotDb(antennaID uint, latitude, longitude float64) (database.GridCell, error) {
+	cell, err := newGridCell(antennaID, latitude, longitude)
+	if err != nil {
+		return cell, err
 	}
-	return gridCell, nil
+	if cached, ok := gridCellDbCache.Load(database.GridCellIndexer{AntennaID: antennaID, X: cell.X, Y: cell.Y}); ok {
+		return cached.(database.GridCell), nil
+	}
+	return cell, nil
 }
 
 func storeGridCellInCache(gridCell database.GridCell) {
@@ -217,20 +208,6 @@ func storeGridCellInCache(gridCell database.GridCell) {
 //func storeGridCellInDb(gridCell database.GridCell) {
 //	database.SaveGridCell(&gridCell)
 //}
-
-func storeGridCellsInDb(gridCells map[database.GridCellIndexer]database.GridCell) error {
-	if len(gridCells) == 0 {
-		log.Println("No grid cells to insert")
-		return nil
-	}
-
-	gridCellsSlice := make([]database.GridCell, 0)
-	for _, val := range gridCells {
-		gridCellsSlice = append(gridCellsSlice, val)
-	}
-
-	return database.CreateGridCells(gridCellsSlice)
-}
 
 func incrementBucket(gridCell *database.GridCell, time time.Time, rssi float32, snr float32) {
 	signal := rssi
