@@ -1,0 +1,69 @@
+name: Backend checks
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+          check-latest: true
+          cache-dependency-path: go.sum
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 'lts/*'
+          package-manager-cache: false
+      - name: Check formatting and shell syntax
+        run: |
+          unformatted="$(gofmt -l cmd internal pkg tests)"
+          if [ -n "$unformatted" ]; then
+            printf '%s\n' "$unformatted"
+            exit 1
+          fi
+          for script in scripts/*.sh; do sh -n "$script"; done
+      - name: Build all commands
+        run: CGO_ENABLED=0 go build -mod=vendor ./cmd/...
+      - name: Unit tests with race detector
+        run: go test -mod=vendor -race -timeout 120s ./...
+      - name: Browser regression
+        run: node --test internal/tilemapserver/debug/coverage.test.cjs
+
+  postgres:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: stable
+          check-latest: true
+          cache-dependency-path: go.sum
+      - name: Install PostgreSQL server tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y postgresql
+      - name: Disposable PostgreSQL integration tests
+        run: scripts/check-postgres-integration.sh -v
+
+  images:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build all ten service images
+        run: scripts/build-images.sh
